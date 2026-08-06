@@ -5,11 +5,34 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks> 
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NCalc" Version="6.4.0" />
+  </ItemGroup>
+
+  <Target Name="ExtractVersionFromProgram" BeforeTargets="PackAsLibraryAfterPublish">
+    <ReadLinesFromFile File="Program.cs">
+      <Output TaskParameter="Lines" ItemName="ProgramLines" />
+    </ReadLinesFromFile>
+    
+    <PropertyGroup>
+      <ProgramText>@(ProgramLines, '%0A')</ProgramText>
+      <ExtractedVersion>$([System.Text.RegularExpressions.Regex]::Match($(ProgramText), `(?&lt;=")[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-A0-9.-]+)?(?=")`))</ExtractedVersion>
+      <PackageVersion Condition="'$(ExtractedVersion)' != ''">$(ExtractedVersion)</PackageVersion>
+      <PackageVersion Condition="'$(ExtractedVersion)' == ''">1.0.0</PackageVersion>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="PackAsLibraryAfterPublish" AfterTargets="Publish" Condition="'$(IsPacking)' != 'true'">
+    <Message Importance="high" Text="Starting package generation with version $(PackageVersion)..." />
+    <Exec Command="dotnet pack &quot;$(MSBuildProjectFullPath)&quot; -p:IsPacking=true -p:OutputType=Library -p:PackageId=extls.Package -p:Version=$(PackageVersion) --configuration $(Configuration) --output &quot;bin\package&quot;" />
+  </Target>
+
+  <ItemGroup Condition="'$(IsPacking)' == 'true'">
+    <Compile Remove="Program.cs" />
+    <None Remove="Program.cs" />
   </ItemGroup>
 
 </Project>

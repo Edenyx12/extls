@@ -4,7 +4,7 @@ using System;
 
 internal class Program
 {
-    public static string version = "0.2.2-alpha";
+    public static string version = "0.2.32-alpha";
 
     static void Main(string[] args)
     {
@@ -23,7 +23,7 @@ internal class Program
 
         switch (args[0])
         {
-            case "version": case "--version": case "-v":
+            case "version" or "--version" or "-v":
                 Print.Line($"extls {version}");
                 return;
             case "where": Print.Line(AppDomain.CurrentDomain.BaseDirectory, ConsoleColor.Green); return;
@@ -42,7 +42,7 @@ internal class Program
             "ai" => new AI(),
             "ai>apikeys" => new ApiKeys(),
             "calc" or "calculate" => new Calculator(),
-            "path" => new extls.Tools.Path(),
+            "dir" => new Dir(),
             _ => null
         };
     }

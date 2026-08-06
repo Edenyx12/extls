@@ -8,24 +8,26 @@
 
         public virtual void Help()
         {
-            Markup.Rich($"Help of module [blue]'{name}'[white]:\n\n", null!);
+            
+            Markup.Rich($"Help of module [blue]'{name}'[white]:\n", null!, true);
             for (int i = 0; i < commands?.Length; i++)
             {
-                string wrap = "\n";
-                if (i + 1 == commands?.Length) wrap = "";
-                Markup.Rich($"* [yellow]{commands?[i].name}[white] - {commands?[i].description}" + wrap, null!);
+                bool isArgs = commands?[i].args != null && commands[i].args.Length > 0;
+                bool isExample = !(commands?[i].example is null or "");
+                Markup.Rich((isArgs && isExample && i != 0 ? "\n" : "") + 
+                    $"* [yellow]{commands?[i].name}[white] - {commands?[i].description}", null!, true);
 
-                if (commands?[i].args != null && commands[i].args.Length > 0)
+                if (isArgs)
                 {
                     foreach (string arg in commands[i].args)
                     {
                         if (arg is null or "") continue;
-                        Print.Inline($"\n  {arg}", ConsoleColor.DarkGray);
+                        Print.Line($"  {arg}", ConsoleColor.DarkGray);
                     }
                 }
 
-                if (!(commands?[i].example is null or ""))
-                    Markup.Rich($"\n  [darkgray]example: {commands[i].example}.", null!);
+                if (isExample)
+                    Markup.Rich($"  [darkgray]example: {commands?[i].example}.", null!, true);
             }
             Console.WriteLine("\n");
         }

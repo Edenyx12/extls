@@ -2,7 +2,12 @@
 {
     public static class Markup
     {
-        public static void Rich(string code, string[] vars)
+        static Markup()
+        {
+            System.Console.OutputEncoding = System.Text.Encoding.UTF8;
+        }
+
+        public static void Rich(string code, string[] vars, bool line = false)
         {
             string[] tokens = Parse(code);
             bool openCommand = false;
@@ -16,7 +21,11 @@
                     continue;
                 }
 
-                openCommand = tokens[i] switch {  "[" => true, "]" => false,  _ => openCommand };
+                openCommand = tokens[i] switch {  
+                    "[" => true,
+                    "]" => false,
+                    _ => openCommand
+                };
                 if (tokens[i] is "[" or "]") continue;
                
                 if (openCommand)
@@ -36,6 +45,19 @@
             }
 
             Console.ResetColor();
+            if (line) Console.WriteLine();
+        }
+        public static string FixBackslash(string text)
+        {
+            string fix = "";
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] is '\\')
+                    fix += '\\';
+                fix += text[i];
+            }
+
+            return fix;
         }
 
         private static string[] Parse(string code)

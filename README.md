@@ -1,1 +1,1 @@
-# extls
+# extls CLI program
