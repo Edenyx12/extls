@@ -46,6 +46,8 @@
 
             Console.ResetColor();
             if (line) Console.WriteLine();
+
+            Console.Out.Flush();
         }
         public static string FixBackslash(string text)
         {

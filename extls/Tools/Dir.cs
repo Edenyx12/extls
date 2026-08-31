@@ -8,7 +8,7 @@ namespace extls.Tools
         public Dir()
         {
             name = "dir";
-            version = "0.4a";
+            version = "0.5.1b";
             commands = new[]
             {
                 new HelpSlot("scan", "scans the specified directory",
@@ -18,7 +18,7 @@ namespace extls.Tools
                              "\"extls dir scan \"YOUR_PATH_OF_DISK\" -s --type folder\""),
                 new HelpSlot("create", "creates files\\folders on the disk at the specified path or relative to the terminal's current path",
                       new[] {"\"--set-path, -sp\" - manually specify the full path (e.g., \"-sm Disk:\\\")"},
-                             "\'extls dir create file\\\\folder \"file.txt\" -sm \"PATH\"\'")
+                             "\'extls dir create file\\\\folder \"file.txt\" -sp \"PATH\"\'")
             };
         }
 
@@ -99,9 +99,9 @@ namespace extls.Tools
                 return;
             }
 
-            bool auto = false;
+            bool auto = true;
             bool recursive = false;
-            int recursiveLevels = 0;
+            int recursiveLevels = 1;
             bool summary = false;
             byte foldersOrFilesOrAll = 0; // 0 - all, 1 - folder, 2 - file
 
@@ -140,7 +140,7 @@ namespace extls.Tools
             int sumDir = 0;
             int sumF = 0;
 
-            ExecuteScan(path, 0, (recursive ? recursiveLevels : 0), summary, foldersOrFilesOrAll, ref sumDir, ref sumF);
+            ExecuteScan(path, 0, (recursive ? recursiveLevels : 1), summary, foldersOrFilesOrAll, ref sumDir, ref sumF);
 
             if (summary)
             {
@@ -165,7 +165,7 @@ namespace extls.Tools
                 _ => "Unknown Error"
             };
         }
-        private void ExecuteScan( string path, int currentLevel, int maxLevels, bool summary, byte typeFilter, ref int sumDir, ref int sumF)
+        private void ExecuteScan(string path, int currentLevel, int maxLevels, bool summary, byte typeFilter, ref int sumDir, ref int sumF)
         {
             FolderStatus status = OpenFolder(path);
 
@@ -178,13 +178,14 @@ namespace extls.Tools
                 string statusTag = status switch
                 {
                     FolderStatus.Ok => "",
-                    FolderStatus.Empty => " [[yellow]empty[white]]",
-                    FolderStatus.AccessDenied => " [[red]access denied[white]]",
-                    FolderStatus.NotFound => " [[yellow]not found[white]]",
-                    _ => " [[red]error[white]]"
+                    FolderStatus.Empty => "[[cyan](empty)[white]]",
+                    FolderStatus.AccessDenied => "[[red](access denied)[white]]",
+                    FolderStatus.NotFound => "[[yellow](not found)[white]]",
+                    _ => "[[red](error)[white]]"
                 };
-
-                Markup.Rich($"{indent}[yellow]\\\\{folderName}{statusTag}\\\\", null!, true);
+                
+                if ()
+                Markup.Rich($"{indent}[yellow]\\\\{folderName}\\\\ {statusTag}", null!, true);
             }
 
             if (status != FolderStatus.Ok) return;
@@ -195,8 +196,8 @@ namespace extls.Tools
                 {
                     foreach (string file in Directory.EnumerateFiles(path))
                     {
-                        sumF++;
-                        if (!summary)
+                        if (currentLevel < maxLevels) sumF++;
+                        if (!summary && currentLevel < maxLevels)
                         {
                             string indent = new string(' ', (currentLevel + 1) * 2);
                             Console.WriteLine($"{indent}\\{System.IO.Path.GetFileName(file)}");

@@ -19,7 +19,7 @@
 
                 if (isArgs)
                 {
-                    foreach (string arg in commands[i].args)
+                    foreach (string arg in commands?[i].args!)
                     {
                         if (arg is null or "") continue;
                         Print.Line($"  {arg}", ConsoleColor.DarkGray);
@@ -32,7 +32,7 @@
             Console.WriteLine("\n");
         }
         public virtual void Version() => Markup.Rich(
-            $"Module '[blue]{name}'" +
+            $"\nModule '[blue]{name}'" +
             $"\n[white]Version: [cyan]{version}.", 
             null!);
 
