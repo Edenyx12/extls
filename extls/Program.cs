@@ -3,7 +3,9 @@ using extls.Tools;
 using System;
 using System.Reflection;
 
-internal class Program
+namespace extls;
+
+public class Program
 {
     public static string version = "0.2.32-alpha";
 
@@ -23,6 +25,13 @@ internal class Program
 
             if (args[i] == "--verbose") Print.verbose = true;
         }
+        
+        if (OperatingSystem.IsWindows())
+            Root.Platform =  Platform.Windows;
+        else if (OperatingSystem.IsLinux())
+            Root.Platform =  Platform.Linux;
+        else if (OperatingSystem.IsMacOS())
+            Root.Platform =  Platform.MacOs;
 
         switch (args[0])
         {

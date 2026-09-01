@@ -8,7 +8,7 @@ namespace extls.Tools
         public Dir()
         {
             name = "dir";
-            version = "0.5.1b";
+            version = "0.5.2b";
             commands = new[]
             {
                 new HelpSlot("scan", "scans the specified directory",
@@ -37,7 +37,7 @@ namespace extls.Tools
 
             return true;
         }
-
+        
         private void Create(string[] args)
         {
             if (args.Length == 0) { Print.Error("Arguments are missing."); return; }
@@ -99,7 +99,7 @@ namespace extls.Tools
                 return;
             }
 
-            bool auto = true;
+            bool auto = false;
             bool recursive = false;
             int recursiveLevels = 1;
             bool summary = false;
@@ -109,7 +109,7 @@ namespace extls.Tools
             {
                 switch (args[i])
                 {
-                    case "--auto": auto = true; break;
+                    case "--auto" or "-a": auto = true; break;
                     case "--recursive" or "-r": 
                         recursive = true;
                         recursiveLevels = int.MaxValue;
@@ -132,7 +132,7 @@ namespace extls.Tools
             string path = auto ? Directory.GetCurrentDirectory() : args[0];
 
             if (!Directory.Exists(path)) { Print.Error("Unknown path."); return; }
-
+            
             Markup.Rich($"Scan result of path [yellow]'{Markup.FixBackslash(path)}'[white]:\n", null!, true);
 
             Stopwatch time = Stopwatch.StartNew();
@@ -140,7 +140,16 @@ namespace extls.Tools
             int sumDir = 0;
             int sumF = 0;
 
-            ExecuteScan(path, 0, (recursive ? recursiveLevels : 1), summary, foldersOrFilesOrAll, ref sumDir, ref sumF);
+
+            ExecuteScan(
+                path,
+                0,
+                (recursive ? recursiveLevels : 1),
+                summary,
+                foldersOrFilesOrAll,
+                ref sumDir,
+                ref sumF
+            );
 
             if (summary)
             {
@@ -184,8 +193,14 @@ namespace extls.Tools
                     _ => "[[red](error)[white]]"
                 };
                 
-                if ()
-                Markup.Rich($"{indent}[yellow]\\\\{folderName}\\\\ {statusTag}", null!, true);
+                if (Root.Platform is Platform.Windows)
+                    Markup.Rich($"{indent}[yellow]\\\\{folderName}\\\\ {statusTag}", null!, true);
+                else
+                {
+                    if (folderName is "/")
+                        Markup.Rich($"{indent}[yellow]{folderName} {statusTag}", null!, true);
+                    else Markup.Rich($"{indent}[yellow]/{folderName}/ {statusTag}", null!, true);
+                }
             }
 
             if (status != FolderStatus.Ok) return;
@@ -200,7 +215,10 @@ namespace extls.Tools
                         if (!summary && currentLevel < maxLevels)
                         {
                             string indent = new string(' ', (currentLevel + 1) * 2);
-                            Console.WriteLine($"{indent}\\{System.IO.Path.GetFileName(file)}");
+                            
+                            if (Root.Platform is Platform.Windows)
+                                Console.WriteLine($"{indent}\\{System.IO.Path.GetFileName(file)}");
+                            else Console.WriteLine($"{indent}/{System.IO.Path.GetFileName(file)}");
                         }
                     }
                 }
