@@ -15,6 +15,12 @@ namespace extls.Tools
         
         public override bool Dispatch(string[] args)
         {
+            if (Root.Platform is Platform.Linux)
+            {
+                Print.Warning("Linux is not supported on this version.");
+                return false;
+            }
+
             if (base.Dispatch(args)) return false;
 
             aliases = JsonService.LoadJson<List<AliasItem>>("config", "alias.json");
@@ -55,10 +61,12 @@ namespace extls.Tools
 
             string command = LinkAlias(aliasItem.alias, args[1]);
 
+            bool isLinux = Root.Platform is Platform.Linux;
+
             var psi = new ProcessStartInfo
             {
-                FileName = "cmd.exe",
-                Arguments = $"/c \"{command}\"",
+                FileName = isLinux ? "/bin/bash" : "cmd.exe",
+                Arguments = isLinux ? $"-c \"{command}\"" : $"/c \"{command}\"",
 
                 UseShellExecute = false,
                 CreateNoWindow = false,
