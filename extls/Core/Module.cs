@@ -32,8 +32,7 @@
             Console.WriteLine("\n");
         }
         public virtual void Version() => Markup.Rich(
-            $"\nModule '[blue]{name}'" +
-            $"\n[white]Version: [cyan]{version}.", 
+            $"\nModule '[blue]{name}[white]' * [cyan]{version}[white].",
             null!);
 
         public virtual bool Dispatch(string[] args)

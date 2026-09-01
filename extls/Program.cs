@@ -7,17 +7,13 @@ namespace extls;
 
 public class Program
 {
-    public static string version = "0.2.32-alpha";
-
     static void Main(string[] args)
     {
         if (args.Length == 0)
         {
-            Print.Line($"extls {version}");
+            Print.Line($"extls {Root.Version}");
             return;
         }
-
-        Console.SetIn(new CustomConsoleReader());
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -25,18 +21,11 @@ public class Program
 
             if (args[i] == "--verbose") Print.verbose = true;
         }
-        
-        if (OperatingSystem.IsWindows())
-            Root.Platform =  Platform.Windows;
-        else if (OperatingSystem.IsLinux())
-            Root.Platform =  Platform.Linux;
-        else if (OperatingSystem.IsMacOS())
-            Root.Platform =  Platform.MacOs;
 
         switch (args[0])
         {
             case "version" or "--version" or "-v":
-                Print.Line($"extls {version}");
+                Print.Line($"extls {Root.Version}");
                 return;
             case "help" or "-h" or "--help":
                 Assembly assembly = Assembly.GetExecutingAssembly();
@@ -72,24 +61,11 @@ public class Program
         return arg switch
         {
             "ai" => new AI(),
-            "ai>apikeys" => new ApiKeys(),
+            "ai.apikeys" => new ApiKeys(),
             "calc" or "calculate" => new Calculator(),
             "dir" => new Dir(),
-            "terminal-macros" or "tmacro" => new TerminalMacros(),
+            "alias" => new Alias(),
             _ => null
         };
-    }
-}
-
-public class CustomConsoleReader : TextReader
-{
-    private readonly TextReader _originalIn = Console.In;
-
-    public override string ReadLine()
-    {
-        Console.Out.Flush();
-        Console.Error.Flush();
-
-        return _originalIn.ReadLine()!;
     }
 }

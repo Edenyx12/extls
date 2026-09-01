@@ -8,7 +8,7 @@ if [ -f "$CURRENT_DIR/$APP_NAME" ]; then
 fi
 
 dotnet publish "$CURRENT_DIR" -c Release -r linux-x64 --self-contained true \
-  /p:PublishSingleFile=true /p:PublishTrimmed=true \
+  /p:PublishSingleFile=true /p:PublishTrimmed=false \
   --output "$CURRENT_DIR"
 
 if [ -f "$CURRENT_DIR/$APP_NAME.pdb" ]; then

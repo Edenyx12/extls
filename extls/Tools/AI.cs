@@ -1,5 +1,4 @@
 ﻿using extls.Core;
-using System.Text.Json;
 
 namespace extls.Tools
 {
@@ -8,7 +7,7 @@ namespace extls.Tools
         public AI()
         {
             name = "ai";
-            version = "0.1a";
+            version = "0.11a";
             commands = new[] {
                 new HelpSlot("calc-m, calc-memory", "calculates memory consumption based on model weights and quantization in bits",
                      new [] {"\"model weights\" - ex. 23b, 1t, 2m, 3k etc.",

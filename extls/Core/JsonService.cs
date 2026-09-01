@@ -10,6 +10,12 @@ namespace extls.Core
             ".extls"
         );
 
+        static JsonService()
+        {
+            if (!Directory.Exists(RootPath))
+                Directory.CreateDirectory(RootPath);
+        }
+
         public static bool SaveJson<T>(string path, string name, T t) where T : class
         {
             string targetDir = Path.Combine(RootPath, path);
