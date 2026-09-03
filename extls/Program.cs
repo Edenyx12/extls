@@ -31,7 +31,7 @@ public class Program
                 
                 if (!File.Exists(Path.Combine(Root.RootPath, "modules.json")))
                     Markup.Rich($"modules.json deleted in [yellow]{Root.RootPath}", null!);
-                continue;
+                return;
             }
             
             cleanArgs.Add(args[i]);
