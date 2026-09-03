@@ -1,14 +1,11 @@
 ﻿using System.Text.Json;
+using static extls.Core.Root;
 
 namespace extls.Core
 {
     public static class JsonService
     {
         private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
-        private static readonly string RootPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".extls"
-        );
 
         static JsonService()
         {

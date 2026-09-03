@@ -50,9 +50,9 @@ public partial class Dir
             
             // Video & Audio
             ".mp4" or ".mkv" or ".avi" or ".mov"
-                => "",
+                => "",
             ".mp3" or ".wav" or ".ogg"
-                => "",
+                => "",
             
             // Archive & Disk Images
             ".zip" or ".rar" or ".tar" or ".gz" or ".7z"
@@ -62,7 +62,8 @@ public partial class Dir
             // System & Executables
             ".exe" or ".msi" or ".appimage"
                 => "󰣆",
-            ".dll" => "",
+            ".dll" => "",
+            ".desktop" => "",
             
             _ => ""
         };
@@ -74,15 +75,15 @@ public partial class Dir
                   or ".msi" or ".appimage"
                 => "green",
 
-            ".go" or ".cs" or ".css" 
-                => "cyan",
+            ".go" or ".cs" or ".css"
+                => "red",
 
-            ".ts" or ".md" or ".markdown" 
+            ".ts" or ".md" or ".markdown" or ".desktop"
                 => "blue",
 
             ".java" or ".html" or ".htm" or ".pdf" 
                     or ".mp4" or ".mkv" or ".avi" or ".mov" 
-                => "red",
+                => "cyan",
 
             ".c" or ".cpp" or ".h" or ".hpp" or ".xaml" 
                  or ".sql" or ".json" or ".jsonl" 

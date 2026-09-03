@@ -29,7 +29,7 @@ The `extls` utility is built on a modular architecture. Every module features it
 extls help
 
 # Scan the current directory in the terminal
-extls dir scan
+extls dir scan .
 
 # Uses the NCalc library under the hood
 extls calc "2 + 2"

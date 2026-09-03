@@ -3,6 +3,7 @@ using System.Diagnostics;
 
 namespace extls.Tools
 {
+    [ModuleName("dir")]
     public partial class Dir : Module
     {
         public Dir()
@@ -38,7 +39,7 @@ namespace extls.Tools
             return true;
         }
         
-        private void Create(string[] args)
+        public void Create(string[] args)
         {
             if (args.Length == 0) { Print.Error("Arguments are missing."); return; }
 
@@ -91,7 +92,7 @@ namespace extls.Tools
                              $"\n[white]Path: [yellow]{Markup.FixBackslash(path)}", null!);
         }
 
-        private void Scan(string[] args)
+        public void Scan(string[] args)
         {
             if (args.Length == 0)
             {
@@ -144,7 +145,7 @@ namespace extls.Tools
             
             ExecuteScan(path, 0, (recursive ? recursiveLevels : 1), summary, foldersOrFilesOrAll, ref sumDir, ref sumF);
 
-            if (summary)
+            if (summary || Print.verbose)
             {
                 if (foldersOrFilesOrAll is 0 or 1) Markup.Rich($"Folders [green]scanned[white]: {sumDir}\n", null!);
                 if (foldersOrFilesOrAll is 0 or 2) Markup.Rich($"Files [green]scanned[white]: {sumF}\n", null!);

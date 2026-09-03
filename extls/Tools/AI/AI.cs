@@ -2,7 +2,8 @@
 
 namespace extls.Tools
 {
-    public class AI : Module
+    [ModuleName("ai")]
+    public partial class AI : Module
     {
         public AI()
         {
