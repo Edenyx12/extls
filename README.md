@@ -26,6 +26,9 @@ The `extls` utility is built on a modular architecture. Every module features it
 #### Usage Examples
 ```bash
 # List all available modules
+extls modules
+
+# Show help
 extls help
 
 # Scan the current directory in the terminal
