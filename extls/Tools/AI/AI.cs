@@ -9,33 +9,16 @@ namespace extls.Tools
         {
             name = "ai";
             version = "0.11a";
-            commands = new[] {
-                new HelpSlot("calc-m, calc-memory", "calculates memory consumption based on model weights and quantization in bits",
-                     new [] {"\"model weights\" - ex. 23b, 1t, 2m, 3k etc.",
-                             "\"model quantization\" - ex 8, 16, 32, etc." },
+            commands = [
+                new HelpSlot("calculate-memory", "calculates memory consumption based on model weights and quantization in bits",
+                            ["\"model weights\" - ex. 23b, 1t, 2m, 3k etc.",
+                             "\"model quantization\" - ex 8, 16, 32, etc." ],
                              "extls ai calc-m 8b 16 (result 14.90 GB)"),
-            };
+            ];
         }
 
-        public override bool Dispatch(string[] args)
-        {
-            if (base.Dispatch(args)) return false;
-
-            switch (args[0])
-            {
-                case "calc-m": case "calc-memory":
-                    Calculate(Utils.RemoveZeroCommand(args));
-                    break;
-
-                default:
-                    Utils.InvalidOperation();
-                    break;
-            }
-
-            return true;
-        }
-
-        private static void Calculate(string[] args)
+        [MethodName(Params.Args, "calculate-memory", "calc", "memory", "cm")]
+        public void Calculate(string[] args)
         {
             if (args.Length == 0)
             {

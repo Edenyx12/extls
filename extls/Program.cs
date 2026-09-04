@@ -57,9 +57,9 @@ public class Program
                 return;
             case "modules":
                 Print.Line("extls modules:");
-                foreach (var key in Root.Modules.Keys)
+                foreach (var key in Root.Modules)
                 {
-                    var mdl = Root.GetModule(key[0]);
+                    var mdl = Root.GetModule(key.Key[0]);
                     if (mdl != null) mdl.Version();
                 }
                 return;
@@ -70,7 +70,7 @@ public class Program
         
         if (module != null)
         {
-            module.Dispatch(Utils.RemoveZeroCommand(args));
+            module.Dispatch(Utils.RemoveZeroCommand(cleanArgs.ToArray()));
             return;
         }
         

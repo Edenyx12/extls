@@ -8,52 +8,46 @@ public enum Platform
     Linux
 }
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class ModuleNameAttribute : Attribute
-{
-    public string[] Names { get; }
-
-    public ModuleNameAttribute(params string[] names)
-    {
-        Names = names;
-    }
-}
-
 public static class Root
 {
     public static Assembly Assembly = Assembly.GetExecutingAssembly();
     public static Platform Platform = Platform.Windows;
-    public static string Version = "0.3.1-alpha";
+    public static string Version = "0.4-alpha";
     public static readonly string RootPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".extls"
     );
     
-    private static Dictionary<string[], string>? _modules { get; set; }
-    public static Dictionary<string[], string> Modules
+    private static Dictionary<string[], ModuleMeta>? _modules;
+    public static Dictionary<string[], ModuleMeta> Modules
     {
         get
         {
             if (_modules is null)
             {
-                ModuleReflectEntry[] mrentry = JsonService.LoadJson<ModuleReflectEntry[]>(
+                ModuleMeta[] json = JsonService.LoadJson<ModuleMeta[]>(
                     RootPath, "modules.json"
                 );
-                
-                _modules = ModuleReflectEntry.GenerateFromEntry(mrentry);
-            }
 
+                _modules = ModuleMeta.ConvertToDictionary(json);
+            }
+            
             if (_modules is null)
-                Modules = GenerateReflection();
+            {
+                _modules = GenerateReflectionCache();
+
+                ModuleMeta[] json = ModuleMeta.ConvertToJsons(_modules);
+                JsonService.SaveJson(RootPath, "modules.json", json);
+            }
 
             return _modules!;
         }
         private set
         {
             _modules = value;
-            
-            ModuleReflectEntry[]? mrentry = ModuleReflectEntry.GenerateFromDictionary(_modules);
-            JsonService.SaveJson(RootPath, "modules.json", mrentry!);
+
+            ModuleMeta[] json = ModuleMeta.ConvertToJsons(_modules);
+            JsonService.SaveJson(RootPath, "modules.json", json);
         }
     }
 
@@ -63,9 +57,9 @@ public static class Root
         else if (OperatingSystem.IsLinux()) Platform =  Platform.Linux;
     }
     
-    static Dictionary<string[], string> GenerateReflection()
+    static Dictionary<string[], ModuleMeta> GenerateReflectionCache()
     {
-        var result = new Dictionary<string[], string>();
+        var result = new Dictionary<string[], ModuleMeta>();
 
         foreach (Type type in Assembly.GetTypes())
         {
@@ -79,7 +73,36 @@ public static class Root
             if (attribute is null)
                 continue;
 
-            result.Add(attribute.Names, type.FullName!);
+            var instance = Activator.CreateInstance(type) as Module;
+
+            List<MethodMeta> methods = new List<MethodMeta>();
+
+            foreach (var method in instance?.GetType()
+                                        .GetMethods(BindingFlags.Public | BindingFlags.Instance) 
+                                        ?? Array.Empty<MethodInfo>())
+            {
+                if (method.DeclaringType != type) continue;
+
+                var methodAttribute = method.GetCustomAttribute<MethodNameAttribute>();
+                if (methodAttribute is null) continue;
+
+                methods.Add(new MethodMeta(
+                    method.Name,
+                    methodAttribute.Aliases,
+                    methodAttribute.Params)
+                );
+            }
+
+            List<string> aliases = new List<string>(attribute.Aliases);
+            string moduleName = instance?.GetType().GetField("name")?.GetValue(instance)?.ToString() ?? string.Empty;
+            if (moduleName != string.Empty && !aliases.Contains(moduleName))
+                aliases.Add(moduleName);
+
+            result.Add(attribute.Aliases, new ModuleMeta (
+                instance?.GetType().FullName!,
+                methods.ToArray(),
+                aliases.ToArray()
+            ));
         }
 
         return result;
@@ -95,7 +118,7 @@ public static class Root
             {
                 if (key.Key[i].Equals(name, StringComparison.OrdinalIgnoreCase))
                 {
-                    moduleName = Modules[key.Key];
+                    moduleName = Modules[key.Key].TypeName;
                     break;
                 }
             }
@@ -109,44 +132,57 @@ public static class Root
         if (module is null) return null!;
         return Activator.CreateInstance(module) as Module;
     }
-}
 
-public struct ModuleReflectEntry
-{
-    public string[] aliases { get; set; }
-    public string typeName { get; set; }
-    
-    public ModuleReflectEntry(string[] aliases, string typeName)
+    public static ModuleMeta GetModuleMeta(string name)
     {
-        this.aliases = aliases;
-        this.typeName = typeName;
+        foreach (var key in Modules)
+            for (int i = 0; i < key.Key.Length; i++)
+                if (key.Key[i].Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return Modules[key.Key];
+        
+        return null!;
     }
 
-    public static ModuleReflectEntry[]? GenerateFromDictionary(Dictionary<string[], string>? dict)
+    public static bool ExecuteModule(Module module, ModuleMeta meta, string[] args)
     {
-        if (dict is null || dict.Count == 0) return null!;
-        
-        ModuleReflectEntry[] result = new ModuleReflectEntry[dict.Count];
-        
-        int i = 0;
-        foreach (var keyv in dict)
+        if (module is null) return false;
+
+        int methodIndex = -1;
+
+        for (int i = 0; i < meta.Methods.Length; i++)
         {
-            result[i] = new ModuleReflectEntry(keyv.Key, keyv.Value);
-            i++;
+            for (int j = 0; j < meta.Methods[i].Aliases.Length; j++)
+            {
+                if (args.Length > 0 && args[0].Equals(meta.Methods[i].Aliases[j], StringComparison.OrdinalIgnoreCase))
+                {
+                    methodIndex = i;
+                    break;
+                }
+            }
+        }
+        Console.WriteLine(methodIndex.ToString());
+        if (methodIndex == -1) return false;
+
+        switch (meta.Methods[methodIndex].Params)
+        {
+            case Params.None:
+                module.GetType()
+                    .GetMethod(meta.Methods[methodIndex].MethodName)?
+                    .Invoke(module, null);
+                break;
+            case Params.Args:
+                string[] cleanArgs = Utils.RemoveZeroCommand(args);
+                module.GetType()
+                    .GetMethod(meta.Methods[methodIndex].MethodName)?
+                    .Invoke(module, new object[] { cleanArgs }); 
+                break;
+            case Params.OneArg:
+                module.GetType()
+                    .GetMethod(meta.Methods[methodIndex].MethodName)?
+                    .Invoke(module, new object[] { args[0] });
+                break;
         }
         
-        return result;
-    }
-
-    public static Dictionary<string[], string>? GenerateFromEntry(ModuleReflectEntry[]? entries)
-    {
-        if (entries is null || entries.Length == 0) return null!;
-        
-        Dictionary<string[], string> result = new Dictionary<string[], string>();
-
-        for (int i = 0; i < entries.Length; i++)
-            result.Add(entries[i].aliases, entries[i].typeName);
-        
-        return result;
+        return true;
     }
 }

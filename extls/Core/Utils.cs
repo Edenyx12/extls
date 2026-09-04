@@ -7,11 +7,10 @@
 
         public static string[] RemoveZeroCommand(string[] args)
         {
+            if (args == null || args.Length <= 1) return Array.Empty<string>();
+            
             string[] newArgs = new string[args.Length - 1];
-
-            for (int i = 1; i < args.Length; i++)
-                newArgs[i-1] = args[i];
-
+            Array.Copy(args, 1, newArgs, 0, newArgs.Length);
             return newArgs;
         }
     }
