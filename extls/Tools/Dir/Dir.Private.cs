@@ -13,6 +13,8 @@ public partial class Dir
         {
             string indent = new string(' ', currentLevel * 2);
             string folderName = System.IO.Path.GetFileName(path);
+            string folderIcon = config.icons ? " " : "";
+
             if (string.IsNullOrEmpty(folderName)) folderName = path;
 
             string statusTag = status switch
@@ -25,12 +27,12 @@ public partial class Dir
             };
 
             if (Root.Platform is Platform.Windows)
-                Markup.Rich($"{indent}[yellow] {folderName}\\\\ {statusTag}", null!, true);
+                Markup.Rich($"{indent}[yellow]{folderIcon}{folderName}\\\\ {statusTag}", null!, true);
             else
             {
                 if (folderName is "/")
                     Markup.Rich($"{indent}[yellow]{folderName} {statusTag}", null!, true);
-                else Markup.Rich($"{indent}[yellow] {folderName}/ {statusTag}", null!, true);
+                else Markup.Rich($"{indent}[yellow]{folderIcon}{folderName}/ {statusTag}", null!, true);
             }
         }
 
@@ -52,8 +54,8 @@ public partial class Dir
 
                         Markup.Rich($"{indent}" +
                                     $"[{fileIconUsable.color}]" +
-                                    $"{fileIconUsable.icon}" +
-                                    $" {fileName}", null!, true);
+                                    $"{(config.icons ? $"{fileIconUsable.icon} " : "")}" +
+                                    $"{fileName}", null!, true);
                     }
                 }
             }
@@ -106,9 +108,25 @@ public partial class Dir
     private enum FolderStatus { Ok, Empty, AccessDenied, NotFound, Error }
     private void FileIcon(string fileName, ref FileIconPack fileIcon)
     {
-        string extension = Path.GetExtension(fileName).ToLowerInvariant(); ;
+        int end = fileName.Length - 1;
+        while (end >= 0 && fileName[end] == ' ') end--;
 
-        fileIcon.icon = extension switch
+        int dotIndex = -1;
+        for (int i = end; i >= 0; i--)
+        {
+            if (fileName[i] == '.')
+            {
+                dotIndex = i;
+                break;
+            }
+            if (fileName[i] == '/' || fileName[i] == '\\') break;
+        }
+
+        ReadOnlySpan<char> extSpan = dotIndex >= 0 
+            ? fileName.AsSpan(dotIndex, end - dotIndex + 1) 
+            : ReadOnlySpan<char>.Empty;
+
+        fileIcon.icon = extSpan switch
         {
             // Language
             ".cs" => "󰌛",
@@ -166,7 +184,7 @@ public partial class Dir
 
             _ => ""
         };
-        fileIcon.color = extension switch
+        fileIcon.color = extSpan switch
         {
             ".py" or "yaml" or ".yml" or ".xls" or ".xlsx"
                   or ".png" or ".jpg" or ".jpeg" or ".webp"
@@ -195,4 +213,5 @@ public partial class Dir
         };
     }
     private record struct FileIconPack(string icon, string color);
+    private readonly record struct GridItem(string name, bool isFolder);
 }

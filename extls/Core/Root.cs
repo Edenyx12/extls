@@ -160,7 +160,7 @@ public static class Root
                 }
             }
         }
-        Console.WriteLine(methodIndex.ToString());
+        
         if (methodIndex == -1) return false;
 
         switch (meta.Methods[methodIndex].Params)

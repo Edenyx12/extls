@@ -51,7 +51,7 @@ public partial class Alias
 
         process.WaitForExit();
 
-        JsonService.SaveJson<List<AliasItem>>("config", "alias.json", aliases);
+        JsonService.SaveJson<List<AliasItem>>("config", "alias.json", aliases!);
     }
 
     private void AddAlias()
