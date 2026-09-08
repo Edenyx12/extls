@@ -1,4 +1,5 @@
 using extls.Core;
+using extls.Core.Decoration;
 using System.Diagnostics;
 
 namespace extls.Tools;
@@ -85,8 +86,8 @@ public partial class Alias
 
         aliases!.Add(aliasItem);
         Markup.Rich("Alias sucessfully created: \n"
-                  + $"[cyan]name[white]: {name}\n"
-                  + $"[magenta]alias[white]: {alias}", null!);
+                  + $"$[cyan]name$[white]: {name}\n"
+                  + $"$[magenta]alias$[white]: {alias}");
     }
 
     private void RemoveAlias()

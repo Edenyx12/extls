@@ -1,4 +1,5 @@
 using extls.Core;
+using extls.Core.Decoration;
 
 namespace extls.Tools;
 
@@ -27,12 +28,12 @@ public partial class Dir
             };
 
             if (Root.Platform is Platform.Windows)
-                Markup.Rich($"{indent}[yellow]{folderIcon}{folderName}\\\\ {statusTag}", null!, true);
+                Markup.Rich($"{indent}$[yellow]{folderIcon}{folderName}\\\\ {statusTag}", true);
             else
             {
                 if (folderName is "/")
-                    Markup.Rich($"{indent}[yellow]{folderName} {statusTag}", null!, true);
-                else Markup.Rich($"{indent}[yellow]{folderIcon}{folderName}/ {statusTag}", null!, true);
+                    Markup.Rich($"{indent}$[#7dbeff]{folderName} {statusTag}", true);
+                else Markup.Rich($"{indent}$[#7dbeff]{folderIcon}{folderName}/ {statusTag}", true);
             }
         }
 
@@ -53,9 +54,9 @@ public partial class Dir
                         FileIcon(fileName, ref fileIconUsable);
 
                         Markup.Rich($"{indent}" +
-                                    $"[{fileIconUsable.color}]" +
+                                    $"$[{fileIconUsable.color}]" +
                                     $"{(config.icons ? $"{fileIconUsable.icon} " : "")}" +
-                                    $"{fileName}", null!, true);
+                                    $"{fileName}", true);
                     }
                 }
             }

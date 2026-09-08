@@ -1,4 +1,5 @@
 ﻿using extls.Core;
+using extls.Core.Decoration;
 using System.Diagnostics;
 
 namespace extls.Tools;
@@ -86,12 +87,12 @@ public partial class Dir : Module
         }
         catch (Exception ex) { success = false; failReason = Reason(ex); }
 
-        if (success) Markup.Rich($"Item created [green]successfully[white]!" +
-                                 $"\n[white]Item name: [cyan]{Markup.FixBackslash(name)}" +
-                                 $"\n[white]Path: [yellow]{Markup.FixBackslash(path)}", null!);
-        else Markup.Rich($"Create item [red]failed[white] of reason: [yellow]{failReason}[yellow]." +
-                         $"\n[white]Item name: [cyan]{Markup.FixBackslash(name)}" +
-                         $"\n[white]Path: [yellow]{Markup.FixBackslash(path)}", null!);
+        if (success) Markup.Rich($"Item created **$[green]successfully[white]**!" +
+                                 $"\n$[white]Item name: $[cyan]{Markup.FixBackslash(name)}" +
+                                 $"\n$[white]Path: $[yellow]{Markup.FixBackslash(path)}");
+        else Markup.Rich($"Create item **$[red]failed$[white]** of reason: $[yellow]{failReason}$[yellow]." +
+                         $"\n$[white]Item name: **$[cyan]{Markup.FixBackslash(name)}**" +
+                         $"\n$[white]Path: *$[yellow]{Markup.FixBackslash(path)}*");
     }
 
     [MethodName(Params.Args, ["tree", "tr"])]
@@ -114,9 +115,12 @@ public partial class Dir : Module
             {
                 case "--recursive" or "-r":
                     recursive = true;
-                    recursiveLevels = int.MaxValue;
+                    recursiveLevels = 999999;
                     if (i + 1 < args.Length && int.TryParse(args[i + 1], out int l))
+                    {
                         recursiveLevels = l;
+                        continue;
+                    }
                     break;
                 case "--summary" or "--sum" or "-s": summary = true; break;
                 case "--type":
@@ -146,7 +150,10 @@ public partial class Dir : Module
         }
 
         if (!config.mini)
-            Markup.Rich($"Scan result of path [yellow]'{Markup.FixBackslash(path)}'[white]:\n", null!, true);
+            Markup.Rich($"Scan result of path $[{
+                (Root.Platform is Platform.Windows ? "yellow" : "#7dbeff")
+                }]'{Markup.FixBackslash(path)}'$[white]:\n", true);
+        else Console.WriteLine();
 
         Stopwatch time = Stopwatch.StartNew();
 
@@ -157,13 +164,13 @@ public partial class Dir : Module
 
         if (summary || Print.verbose)
         {
-            if (foldersOrFilesOrAll is 0 or 1) Markup.Rich($"Folders [green]scanned[white]: {sumDir}\n", null!);
-            if (foldersOrFilesOrAll is 0 or 2) Markup.Rich($"Files [green]scanned[white]: {sumF}\n", null!);
+            if (foldersOrFilesOrAll is 0 or 1) Markup.Rich($"Folders $[green]scanned$[white]: {sumDir}\n");
+            if (foldersOrFilesOrAll is 0 or 2) Markup.Rich($"Files $[green]scanned$[white]: {sumF}\n");
         }
 
         time.Stop();
         if (Print.verbose)
-            Markup.Rich($"\nScanned in: [magenta]{time.Elapsed}", null!, true);
+            Markup.Rich($"\nScanned in: $[#d375ff]{time.Elapsed}", true);
         Console.WriteLine();
     }
 
@@ -206,7 +213,6 @@ public partial class Dir : Module
             Print.Debug($"{item.name} ({item.name.Length} chars.)");
         Print.Debug("\n");
 
-
         int width = Console.WindowWidth;
         int lengthCount = 0;
 
@@ -225,7 +231,9 @@ public partial class Dir : Module
 
             lengthCount += output.Length;
 
-            Markup.Rich($"[{(items[i].isFolder ? "yellow" : fileIconUsable.color)}]{output}", null!);
+            Markup.Rich($"$[{
+                (items[i].isFolder ? (Root.Platform is Platform.Linux ? "#7dbeff" : "yellow") : fileIconUsable.color)
+                }]{output}");
         }
     }
 
@@ -244,8 +252,8 @@ public partial class Dir : Module
         if (!File.Exists(path))
         {
             JsonService.SaveJson(Path.Combine(Root.RootPath, "config"), "dir-config.json", config);
-            Markup.Rich($"dir: config [green]successfully[white] created in: \n [yellow]{fixedConsolePath}"
-                        + "\n[darkgray]to change config, open config.json", null!);
+            Markup.Rich($"dir: config $[green]successfully$[white] created in: \n $[yellow]{fixedConsolePath}"
+                        + "\n$[darkgray]to change config, open config.json");
         }
         else Print.Debug($"dir: config already exists in {path}");
     }

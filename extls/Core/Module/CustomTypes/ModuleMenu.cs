@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using extls.Core.Decoration;
 
 namespace extls.Core.Modules;
 
@@ -69,13 +70,13 @@ public abstract class ModuleMenu : Module
             DrawMenu();
 
             string color = colorType switch {
-                1 => "[red]>[white]",
-                2 => "[green]>[white]",
-                3 => "[yellow]>[white]",
-                _ => "[white]>[white]"
+                1 => "$[red]>$[white]",
+                2 => "$[green]>$[white]",
+                3 => "$[yellow]>$[white]",
+                _ => "$[white]>$[white]"
             };
             
-            Markup.Rich($"\n[cyan]{name}[white] Menu {color} ", null!, false);
+            Markup.Rich($"\n$[cyan]{name}$[white] Menu {color} ", false);
             colorType = 0;
             string? input = Console.ReadLine();
             Console.WriteLine();
@@ -115,8 +116,8 @@ public abstract class ModuleMenu : Module
     /// </summary>
     protected virtual void OnStart()
     {
-        Markup.Rich($"[green]{name}[white] Menu - [cyan]{version}[white].\n" +
-                    $"[darkgray]`/h` for help, `v` for version.[white]", null!, true);
+        Markup.Rich($"$[green]{name}$[white] Menu - $[cyan]{version}$[white].\n" +
+                    $"$[darkgray]`/h` for help, `/v` for version.$[white]", true);
     }
     /// <summary>
     /// This method is called when the menu exits.
@@ -125,7 +126,7 @@ public abstract class ModuleMenu : Module
     /// </summary>
     protected virtual void OnExit()
     {
-        Markup.Rich($"[darkgray]Exiting {name} Menu.", null!, true);
+        Markup.Rich($"$[gray]Exiting *{name}* Menu.", true);
 
         if (Print.verbose)
         {
@@ -135,7 +136,7 @@ public abstract class ModuleMenu : Module
                 ? $"{elapsed.TotalSeconds:F2}s"
                 : $"{elapsed.TotalMilliseconds:F2}ms";
 
-            Markup.Rich($"[darkgray]Menu execution time: [yellow]{time}", null!, true);
+            Markup.Rich($"$[darkgray]Menu execution time: $[yellow]{time}", true);
         }
     }
 }

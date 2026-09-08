@@ -1,6 +1,6 @@
 using extls.Core;
 using extls.Core.Modules;
-using System.Diagnostics;
+using extls.Core.Decoration;
 
 namespace extls.Tools;
 
@@ -54,8 +54,8 @@ public partial class Alias : ModuleMenu
 
         for (int i = 0; i < aliases.Count; i++)
         {
-            Markup.Rich($"({i}) [cyan]{aliases[i].name}[white]: " +
-                         aliases[i].alias + "\n", null!);
+            Markup.Rich($"({i}) $[cyan]{aliases[i].name}$[white]: " +
+                         aliases[i].alias + "\n");
         }
     }
 

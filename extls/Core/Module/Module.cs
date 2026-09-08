@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using System.Collections;
+﻿using extls.Core.Decoration;
 
 namespace extls.Core;
 
@@ -27,13 +26,13 @@ public abstract class Module
 
     public virtual void Help()
     {
-        Markup.Rich($"Help of module [blue]'{name}'[white]:\n", null!, true);
+        Markup.Rich($"Help of module $[blue]'{name}'$[white]:\n", true);
         for (int i = 0; i < commands?.Length; i++)
         {
             bool isArgs = commands?[i].args != null && commands[i].args.Length > 0;
             bool isExample = !(commands?[i].example is null or "");
             Markup.Rich((isArgs && isExample && i != 0 ? "\n" : "") +
-                $"* [yellow]{commands?[i].name}[white] - {commands?[i].description}", null!, true);
+                $"\\* $[yellow]{commands?[i].name}$[white] - {commands?[i].description}", true);
 
             if (isArgs)
             {
@@ -45,13 +44,11 @@ public abstract class Module
             }
 
             if (isExample)
-                Markup.Rich($"  [darkgray]example: {commands?[i].example}.", null!, true);
+                Markup.Rich($"  $[darkgray]example: {commands?[i].example}.", true);
         }
         Console.WriteLine("\n");
     }
-    public virtual void Version() => Markup.Rich(
-        $"\nModule '[blue]{name}[white]' * [cyan]{version}[white].",
-        null!);
+    public virtual void Version() => Markup.Rich($"\nModule '$[blue]{name}$[white]' \\* $[cyan]{version}$[white].");
 
     public virtual bool Dispatch(string[] args)
     {

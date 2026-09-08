@@ -1,6 +1,5 @@
 ﻿using extls.Core;
-using extls.Tools;
-using System.Reflection;
+using extls.Core.Decoration;
 
 namespace extls;
 
@@ -10,7 +9,7 @@ public class Program
     {
         if (args.Length == 0)
         {
-            Markup.Rich($"extls: [cyan]{Root.Version}", null!);
+            Markup.Rich($"$[#ead9fa]extls: $[cyan]{Root.Version}");
             return;
         }
 
@@ -30,7 +29,7 @@ public class Program
                     File.Delete(Path.Combine(Root.RootPath, "modules.json"));
                 
                 if (!File.Exists(Path.Combine(Root.RootPath, "modules.json")))
-                    Markup.Rich($"modules.json deleted in [yellow]{Root.RootPath}", null!);
+                    Markup.Rich($"**$[blue]modules.json$[white]** deleted in $[yellow]{Markup.FixBackslash(Root.RootPath)}");
                 return;
             }
             
@@ -42,10 +41,10 @@ public class Program
         switch (cleanArgs[0])
         {
             case "version" or "--version" or "-v":
-                Print.Line($"extls {Root.Version}");
+                Markup.Rich($"$[#ead9fa]extls: $[cyan]{Root.Version}");
                 return;
             case "help" or "-h" or "--help":
-                Markup.Rich($"extls {Root.Version}:\n[darkgray]" +
+                Markup.Rich($"$[#ead9fa]extls: $[cyan]{Root.Version}:\n$[darkgray]" +
                             $"  --version / version - Check extls version.\n" +
                             $"  -v - Alias on --version.\n" +
                             $"  --help / help - Show this help text.\n" +
@@ -53,7 +52,7 @@ public class Program
                             $"  --verbose - Enable verbose logging.\n" +
                             $"  modules - Show all modules.\n" +
                             $"  where - Show path on this process.\n" +
-                            $"\n[green]extls <MODULE> <MODULE-ARGS> <ARGS>\n", null!);
+                            $"\n$[green]extls <MODULE> <MODULE-ARGS> <ARGS>\n");
                 return;
             case "modules":
                 Print.Line("extls modules:");

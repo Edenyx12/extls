@@ -12,7 +12,7 @@ public static class Root
 {
     public static Assembly Assembly = Assembly.GetExecutingAssembly();
     public static Platform Platform = Platform.Windows;
-    public static string Version = "0.4-alpha";
+    public static string Version = "0.4.5.decorated-alpha";
     public static readonly string RootPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".extls"
