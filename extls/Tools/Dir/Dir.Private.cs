@@ -21,10 +21,10 @@ public partial class Dir
             string statusTag = status switch
             {
                 FolderStatus.Ok => "",
-                FolderStatus.Empty => "[[cyan](empty)[white]]",
-                FolderStatus.AccessDenied => "[[red](access denied)[white]]",
-                FolderStatus.NotFound => "[[yellow](not found)[white]]",
-                _ => "[[red](error)[white]]"
+                FolderStatus.Empty => "$[cyan](empty)$[white]",
+                FolderStatus.AccessDenied => "$[red](access denied)$[white]",
+                FolderStatus.NotFound => "$[yellow](not found)$[white]",
+                _ => "$[red](error)$[white]"
             };
 
             if (Root.Platform is Platform.Windows)
@@ -46,17 +46,25 @@ public partial class Dir
             {
                 foreach (string file in Directory.EnumerateFiles(path))
                 {
-                    if (currentLevel < maxLevels) sumF++;
-                    if (!summary && currentLevel < maxLevels)
+                    if (currentLevel < maxLevels)
                     {
-                        string indent = new string(' ', (currentLevel + 1) * 2);
-                        string fileName = System.IO.Path.GetFileName(file);
-                        FileIcon(fileName, ref fileIconUsable);
+                        string fileName = Path.GetFileName(file);
 
-                        Markup.Rich($"{indent}" +
-                                    $"$[{fileIconUsable.color}]" +
-                                    $"{(config.icons ? $"{fileIconUsable.icon} " : "")}" +
-                                    $"{fileName}", true);
+                        if (config.IsIgnored(Path.GetExtension(fileName))) continue;
+
+                        sumF++;
+
+                        if (!summary)
+                        {
+                            string indent = new string(' ', (currentLevel + 1) * 2);
+
+                            FileIcon(fileName, ref fileIconUsable);
+
+                            Markup.Rich($"{indent}" +
+                                        $"$[{fileIconUsable.color}]" +
+                                        $"{(config.icons ? $"{fileIconUsable.icon} " : "")}" +
+                                        $"{fileName}", true);
+                        }
                     }
                 }
             }
@@ -127,90 +135,70 @@ public partial class Dir
             ? fileName.AsSpan(dotIndex, end - dotIndex + 1) 
             : ReadOnlySpan<char>.Empty;
 
-        fileIcon.icon = extSpan switch
+        fileIcon = extSpan switch
         {
             // Language
-            ".cs" => "󰌛",
-            ".py" => "",
-            ".js" => "",
-            ".ts" => "",
-            ".cpp" or ".h" or ".hpp" => "",
-            ".c" => "",
-            ".go" => "󰟓",
-            ".rs" => "",
-            ".java" => "",
-            ".asm" => "",
+            ".cs"      => new ("󰌛", "octavus"),
+            ".py"      => new ("", "platypus"),
+            ".js"      => new ("", "genesis"),
+            ".ts"      => new ("", "navy"),
+            ".cpp" or ".h" or ".hpp"
+                       => new ("", "septima"),
+            ".c"       => new ("", "purplerain"),
+            ".go"      => new ("󰟓", "octavus"),
+            ".rs"      => new ("", "festive"),
+            ".java"    => new ("", "genesis"),
+            ".asm"     => new ("", "nonalux"),
 
             // Mark & <>
-            ".md" or ".markdown" => "",
-            ".html" or ".htm" => "",
-            ".css" => "",
-            ".xaml" => "󰙳",
+            ".md" or ".markdown"
+                       => new ("", "cyanish"),
+            ".html" or ".htm"
+                       => new ("", "sextus"),
+            ".css"     => new ("", "mint"),
+            ".xaml"    => new ("󰙳", "sevenup"),
 
             // Terminal Script & Configs & Data
-            ".bat" or ".cmd" => "",
-            ".ps1" => "󰨊",
-            ".yaml" or ".yml" => "",
-            ".sql" => "",
-            ".json" => "",
-            ".jsonl" => "󰘦",
-            ".txt" => "󰦨",
-            ".pdf" => "󰈦",
-            ".xls" or ".xlsx" => "",
+            ".bat" or ".cmd"
+                       => new ("", "catppuccin"),
+            ".ps1"     => new ("󰨊", "octavus"),
+            ".yaml" or ".yml"
+                       => new ("", "septima"),
+            ".sql"     => new ("", "genesis"),
+            ".json"    => new ("", "barbie"),
+            ".jsonl"   => new ("󰘦", "barbie"),
+            ".txt"     => new ("󰦨", "catppuccin"),
+            ".pdf"     => new ("󰈦", "nona"),
+            ".xls" or ".xlsx"
+                       => new ("", "cyanish"),
 
             // Images & Graphics
-            ".png" => "󰸭",
-            ".jpg" or ".jpeg" => "󰈥",
-            ".webp" => "",
-            ".svg" => "󰜡",
-            ".gif" => "󰵸",
-            ".ico" => "",
+            ".png"     => new ("󰸭", "octavus"),
+            ".jpg" or ".jpeg"
+                       => new ("󰈥", "navy"),
+            ".webp"    => new ("", "octavus"),
+            ".svg"     => new ("󰜡", "platypus"),
+            ".gif"     => new ("󰵸", "white"),
+            ".ico"     => new ("", "nona"),
 
             // Video & Audio
             ".mp4" or ".mkv" or ".avi" or ".mov"
-                => "",
+                       => new ("", "octavus"),
             ".mp3" or ".wav" or ".ogg"
-                => "",
+                       => new ("", "septima"),
 
             // Archive & Disk Images
             ".zip" or ".rar" or ".tar" or ".gz" or ".7z"
-                => "󰿺",
-            ".iso" => "",
+                       => new ("󰿺", "mint"),
+            ".iso"     => new ("", "octavus"),
 
             // System & Executables
             ".exe" or ".msi" or ".appimage"
-                => "󰣆",
-            ".dll" => "",
-            ".desktop" => "",
+                       => new ("󰣆", "magenta"),
+            ".dll"     => new ("", "catppuccin"),
+            ".desktop" => new ("", "cyanish"),
 
-            _ => ""
-        };
-        fileIcon.color = extSpan switch
-        {
-            ".py" or "yaml" or ".yml" or ".xls" or ".xlsx"
-                  or ".png" or ".jpg" or ".jpeg" or ".webp"
-                  or ".svg" or ".gif" or ".ico" or ".ogg"
-                  or ".msi" or ".appimage"
-                => "green",
-
-            ".go" or ".cs" or ".css"
-                => "red",
-
-            ".ts" or ".md" or ".markdown" or ".desktop"
-                => "blue",
-
-            ".java" or ".html" or ".htm" or ".pdf"
-                    or ".mp4" or ".mkv" or ".avi" or ".mov"
-                => "cyan",
-
-            ".c" or ".cpp" or ".h" or ".hpp" or ".xaml"
-                 or ".sql" or ".json" or ".jsonl"
-                => "magenta",
-
-            ".asm" or ".rs"
-                => "darkred",
-
-            _ => "white"
+            _ => new ("", "cyan")
         };
     }
     private record struct FileIconPack(string icon, string color);

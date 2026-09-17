@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace extls.Core.Decoration;
 
@@ -23,41 +24,30 @@ public static class Markup
         {
             switch (tokens[i].Type)
             {
-                case MarkupTokenType.Text: Print.Inline(tokens[i].Token); break;
-                case MarkupTokenType.Shield: Print.Inline(tokens[i].Token); break;
+                case MarkupTokenType.Text or MarkupTokenType.Shield: Print.Inline(tokens[i].Token); break;
                 case MarkupTokenType.Italic:
-                    if (italic) {
-                        italic = false;
-                        Print.Inline("\x1b[23m");
-                        break;
-                    }
-                    else {
-                        italic = true;
-                        Print.Inline("\x1b[3m");
-                        break;
-                    }
+                    italic = !italic;
+                    Print.Inline(italic ? "\x1b[3m" : "\x1b[23m");
+                    break;
                 case MarkupTokenType.Bold:
-                    if (bold) {
-                        bold = false;
-                        Print.Inline("\x1b[22m");
-                        break;
-                    }
-                    else {
-                        bold = true;
-                        Print.Inline("\x1b[1m");
-                        break;
-                    }
+                    bold = !bold;
+                    Print.Inline(bold ? "\x1b[1m" : "\x1b[22m");
+                    break;
                 case MarkupTokenType.Color:
-                    Color color = Color.HEXToColor(tokens[i].Token);
-                    Print.Inline($"\x1b[38;2;{color.r};{color.g};{color.b}m");
+                    PrintColor(new Color(tokens[i].Token)); 
                     break;
                 case MarkupTokenType.AutoColor:
-                    SetConsoleColor(tokens[i].Token);
-                    break;
+                    if (!SetConsoleColor(tokens[i].Token)) {
+                        Color c = ParseColor(tokens[i].Token);
+                        Print.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m");
+                    } break;
             }
         }
 
         if (lastWrap) Console.WriteLine();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void PrintColor(Color c) => Print.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m");
     }
 
     public static string FixBackslash(string text)
@@ -158,26 +148,48 @@ public static class Markup
         int stop = str.IndexOf(stopToken, index, StringComparison.Ordinal);
         return stop == -1 ? -1 : stop - index;
     }
-    private static void SetConsoleColor(string color)
+    private static bool SetConsoleColor(ReadOnlySpan<char> name)
     {
-        Console.ForegroundColor = color.ToLowerInvariant() switch
+        switch (name)
         {
-            "black" => ConsoleColor.Black,
-            "darkblue" => ConsoleColor.DarkBlue,
-            "darkgreen" => ConsoleColor.DarkGreen,
-            "darkcyan" => ConsoleColor.DarkCyan,
-            "darkred" => ConsoleColor.DarkRed,
-            "darkmagenta" => ConsoleColor.DarkMagenta,
-            "darkyellow" => ConsoleColor.DarkYellow,
-            "gray" => ConsoleColor.Gray,
-            "darkgray" => ConsoleColor.DarkGray,
-            "blue" => ConsoleColor.Blue,
-            "green" => ConsoleColor.Green,
-            "cyan" => ConsoleColor.Cyan,
-            "red" => ConsoleColor.Red,
-            "magenta" => ConsoleColor.Magenta,
-            "yellow" => ConsoleColor.Yellow,
-            _ or "white" => ConsoleColor.White
-        };
+            case "black":       Console.ForegroundColor = ConsoleColor.Black;       break;
+            case "darkblue":    Console.ForegroundColor = ConsoleColor.DarkBlue;    break;
+            case "darkgreen":   Console.ForegroundColor = ConsoleColor.DarkGreen;   break;
+            case "darkcyan":    Console.ForegroundColor = ConsoleColor.DarkCyan;    break;
+            case "darkred":     Console.ForegroundColor = ConsoleColor.DarkRed;     break;
+            case "darkmagenta": Console.ForegroundColor = ConsoleColor.DarkMagenta; break;
+            case "darkyellow":  Console.ForegroundColor = ConsoleColor.DarkYellow;  break;
+            case "gray":        Console.ForegroundColor = ConsoleColor.Gray;        break;
+            case "darkgray":    Console.ForegroundColor = ConsoleColor.DarkGray;    break;
+            case "blue":        Console.ForegroundColor = ConsoleColor.Blue;        break;
+            case "green":       Console.ForegroundColor = ConsoleColor.Green;       break;
+            case "cyan":        Console.ForegroundColor = ConsoleColor.Cyan;        break;
+            case "red":         Console.ForegroundColor = ConsoleColor.Red;         break;
+            case "magenta":     Console.ForegroundColor = ConsoleColor.Magenta;     break;
+            case "yellow":      Console.ForegroundColor = ConsoleColor.Yellow;      break;
+            case "white":       Console.ForegroundColor = ConsoleColor.White;       break;
+            default:            return false;
+        }
+        return true;
     }
+
+    private static Color ParseColor(ReadOnlySpan<char> name)
+        => name switch {
+        "nona"       => Color.Nona,
+        "nonalux"    => Color.NonaLux,
+        "octavus"    => Color.Octavus,
+        "septima"    => Color.Septima,
+        "sextus"     => Color.Sextus,
+        "festive"    => Color.Festive,
+        "genesis"    => Color.Genesis,
+        "catppuccin" => Color.Catppuccin,
+        "mint"       => Color.Mint,
+        "purplerain" => Color.PurpleRain,
+        "platypus"   => Color.Platypus,
+        "barbie"     => Color.Barbie,
+        "navy"       => Color.Navy,
+        "cyanish"    => Color.Cyanish,
+        "sevenup"    => Color.SevenUp,
+        _            => new Color(255,255,255),
+    };
 }

@@ -12,10 +12,11 @@ public static class Root
 {
     public static Assembly Assembly = Assembly.GetExecutingAssembly();
     public static Platform Platform = Platform.Windows;
-    public static string Version = "0.4.5.decorated-alpha";
+    public static string Version = "0.4.6-alpha";
     public static readonly string RootPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".extls"
+        ".edx",
+        "extls"
     );
     
     private static Dictionary<string[], ModuleMeta>? _modules;
@@ -148,7 +149,7 @@ public static class Root
         if (module is null) return false;
 
         int methodIndex = -1;
-
+        
         for (int i = 0; i < meta.Methods.Length; i++)
         {
             for (int j = 0; j < meta.Methods[i].Aliases.Length; j++)

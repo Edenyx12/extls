@@ -4,17 +4,29 @@ using System.Diagnostics;
 
 namespace extls.Tools;
 
-public record DirConfig(bool icons, bool mini);
+public record DirConfig(bool icons, bool mini, string[] ignoreExtensions)
+{
+    public bool IsIgnored(ReadOnlySpan<char> extension)
+    {
+        for (int i = 0; i < ignoreExtensions.Length; i++)
+        {
+            if (extension.SequenceEqual(ignoreExtensions[i]))
+                return true;
+        }
+
+        return false;
+    }
+}
 
 [ModuleName("dir")]
 public partial class Dir : Module
 {
-    private DirConfig config;
+    private DirConfig config = new(false, false, [".testextension"]);
 
     public Dir()
     {
         name = "dir";
-        version = "0.6.5b";
+        version = "0.6.8b";
         commands =
         [
             new HelpSlot("tree", "scans the specified directory",
@@ -27,17 +39,32 @@ public partial class Dir : Module
                              "\'extls dir create file\\\\folder \"file.txt\" -sp \"PATH\"\'")
         ];
 
-        string configPath = Path.Combine(Root.RootPath, "config", "dir-config.json");
+        string path = Path.Combine(Root.RootPath, "config", "dir-config.json");
 
-        if (!File.Exists(configPath))
-            config = new(false, false);
+        if (File.Exists(path))
+        {
+            config = JsonService.LoadJson<DirConfig>(
+                Path.Combine(Root.RootPath, "config"),
+                "dir-config.json");
+        }
         else
         {
-            config = JsonService.LoadJson<DirConfig>(Path.Combine(Root.RootPath, "config"), "dir-config.json");
-            Print.Debug("dir: config success loaded.");
-        }
+            string fixedConsolePath = string.Empty;
 
-        Config();
+            for (int i = 0; i < path.Length; i++)
+            {
+                if (path[i] is '\\') fixedConsolePath += '\\';
+                fixedConsolePath += path[i];
+            }
+
+            JsonService.SaveJson(
+                Path.Combine(Root.RootPath, "config"),
+                "dir-config.json",
+                config);
+
+            Markup.Rich($"dir: config $[green]successfully$[white] created in: \n $[yellow]{fixedConsolePath}" +
+                        "\n$[darkgray]to change config, open config.json\n");
+        }
     }
 
     [MethodName(Params.Args, ["create", "c"])]
@@ -143,16 +170,16 @@ public partial class Dir : Module
             path = Path.GetFullPath(args[0], Directory.GetCurrentDirectory());
 
         if (!Directory.Exists(path))
-        { 
-            Print.Error("Unknown path."); 
+        {
+            Print.Error("Unknown path.");
             Print.Debug(path);
-            return; 
+            return;
         }
 
-        if (!config.mini)
+        if (!config!.mini)
             Markup.Rich($"Scan result of path $[{
                 (Root.Platform is Platform.Windows ? "yellow" : "#7dbeff")
-                }]'{Markup.FixBackslash(path)}'$[white]:\n", true);
+            }]'{Markup.FixBackslash(path)}'$[white]:\n", true);
         else Console.WriteLine();
 
         Stopwatch time = Stopwatch.StartNew();
@@ -182,7 +209,12 @@ public partial class Dir : Module
         List<GridItem> items = new();
 
         foreach (string folder in Directory.EnumerateDirectories(path)) items.Add(new(Path.GetFileName(folder), isFolder: true));
-        foreach (string file in Directory.EnumerateFiles(path)) items.Add(new(Path.GetFileName(file), isFolder: false));
+        foreach (string file in Directory.EnumerateFiles(path))
+        {
+            string f = Path.GetFileName(file);
+            if (config.IsIgnored(Path.GetExtension(f))) continue;
+            else items.Add(new(f, isFolder: false));
+        }
 
         if (items.Count == 0)
         {
@@ -203,9 +235,9 @@ public partial class Dir : Module
         items.Sort((a, b) =>
         {
             int folderCompare = b.isFolder.CompareTo(a.isFolder);
-            
+
             if (folderCompare != 0) return folderCompare;
-            
+
             return string.Compare(a.name, b.name, StringComparison.Ordinal);
         });
 
@@ -219,11 +251,11 @@ public partial class Dir : Module
         for (int i = 0; i < items.Count; i++)
         {
             FileIcon(items[i].name, ref fileIconUsable);
-            string output = config.icons 
+            string output = config!.icons
                 ? $"{(items[i].isFolder ? "" : fileIconUsable.icon)} {items[i].name}  "
                 : $"{items[i].name}  ";
 
-            if (lengthCount + output.Length > width) 
+            if (lengthCount + output.Length > width)
             {
                 lengthCount = 0;
                 Console.Write("\n");
@@ -231,30 +263,47 @@ public partial class Dir : Module
 
             lengthCount += output.Length;
 
-            Markup.Rich($"$[{
-                (items[i].isFolder ? (Root.Platform is Platform.Linux ? "#7dbeff" : "yellow") : fileIconUsable.color)
-                }]{output}");
+            Markup.Rich($"$[{(items[i].isFolder ? (Root.Platform is Platform.Linux ? "#7dbeff" : "yellow") : fileIconUsable.color)}]{output}");
         }
     }
 
-    [MethodName(Params.None, "config")]
-    public void Config()
+
+    [MethodName(Params.Args, "config")]
+    public void Config(string[] args)
     {
         string path = Path.Combine(Root.RootPath, "config", "dir-config.json");
-        string fixedConsolePath = string.Empty;
 
-        for (int i = 0; i < path.Length; i++)
+        if (args.Length > 0)
         {
-            if (path[i] is '\\') fixedConsolePath += '\\';
-            fixedConsolePath += path[i];
+            for (int i = 0; i < args.Length; i++)
+            {
+                switch (args[i])
+                {
+                    case "--clear" or "-c":
+                        if (File.Exists(path))
+                            File.Delete(path);
+                        break;
+                }
+            }
         }
 
-        if (!File.Exists(path))
+
+        bool ingoreExtensions = config.ignoreExtensions.Length > 0;
+        string extensions = string.Empty;
+
+        if (ingoreExtensions)
         {
-            JsonService.SaveJson(Path.Combine(Root.RootPath, "config"), "dir-config.json", config);
-            Markup.Rich($"dir: config $[green]successfully$[white] created in: \n $[yellow]{fixedConsolePath}"
-                        + "\n$[darkgray]to change config, open config.json");
+            foreach (string extension in config.ignoreExtensions)
+                extensions += $"  $[magenta]{extension}\n";
         }
-        else Print.Debug($"dir: config already exists in {path}");
+        else
+        {
+            extensions = "$[yellow]Empty";
+        }
+
+        Markup.Rich($"$[cyan]Icons: {(config.icons ? "$[green]True" : "$[red]False")}\n" +
+                    $"$[cyan]Mini: {(config.mini ? "$[green]True" : "$[red]False")}\n" +
+                    $"$[cyan]Ignore Extensions: $[white]\n{extensions}");
+
     }
 }
