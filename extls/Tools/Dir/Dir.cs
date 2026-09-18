@@ -73,8 +73,8 @@ public partial class Dir : Module
         if (args.Length == 0) { Print.Error("Arguments are missing."); return; }
 
         int createType = args[0] switch { "file" => 1, "folder" => 0, _ => -1, };
-        if (createType == -1) { Print.Error("invalid type for creation"); return; }
-        if (args.Length < 2) { Print.Error("invalid name for creation"); }
+        if (createType == -1) { Print.Error("Invalid type for creation."); return; }
+        if (args.Length < 2) { Print.Error("Invalid name for creation."); }
         string name = args[1];
 
         bool auto = true;
@@ -304,6 +304,5 @@ public partial class Dir : Module
         Markup.Rich($"$[cyan]Icons: {(config.icons ? "$[green]True" : "$[red]False")}\n" +
                     $"$[cyan]Mini: {(config.mini ? "$[green]True" : "$[red]False")}\n" +
                     $"$[cyan]Ignore Extensions: $[white]\n{extensions}");
-
     }
 }
