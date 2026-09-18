@@ -45,10 +45,10 @@ public partial class Alias : ModuleMenu
     protected override void DrawMenu()
     {
         if (aliases!.Count > 0)
-            Print.Line($"Your marcos ({aliases.Count}):");
+            Print.Line($"Your aliases ({aliases.Count}):");
         else
         {
-            Print.Line($"Empty aliases.", ConsoleColor.Yellow);
+            Print.Line($"No aliases found.", ConsoleColor.Yellow);
             return;
         }
 

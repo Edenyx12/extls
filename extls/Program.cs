@@ -23,13 +23,12 @@ public class Program
                 Print.verbose = true;
                 continue;
             }
-            if (arg == "-clrm")
+            if (arg == "--clear-cache")
             {
                 if (File.Exists(Path.Combine(Root.RootPath, "modules.json")))
                     File.Delete(Path.Combine(Root.RootPath, "modules.json"));
                 
-                if (!File.Exists(Path.Combine(Root.RootPath, "modules.json")))
-                    Markup.Rich($"**$[blue]modules.json$[white]** deleted in $[yellow]{Markup.FixBackslash(Root.RootPath)}");
+                Markup.Rich($"**$[blue]modules.json$[white]** deleted from $[yellow]{Markup.FixBackslash(Root.RootPath)}");
                 return;
             }
             
@@ -50,6 +49,7 @@ public class Program
                             $"  --help / help - Show this help text.\n" +
                             $"  -h - Alias on --help.\n" +
                             $"  --verbose - Enable verbose logging.\n" +
+                            $"  --clear-cache - Clear reflection cache.\n" +
                             $"  modules - Show all modules.\n" +
                             $"  where - Show path on this process.\n" +
                             $"\n$[green]extls <MODULE> <MODULE-ARGS> <ARGS>\n");

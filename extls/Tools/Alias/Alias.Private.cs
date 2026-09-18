@@ -57,7 +57,7 @@ public partial class Alias
 
     private void AddAlias()
     {
-        Print.Inline("Enter the name alias > ");
+        Print.Inline("Enter the alias name >");
         string name = Console.ReadLine()!;
 
         Print.Inline("Enter the alias with '&' symbol of target arg > ");
@@ -65,7 +65,7 @@ public partial class Alias
 
         if (CheckAlias(name, out int i))
         {
-            Print.Error($"Already used name of '{name}'");
+            Print.Error($"'{name}' is already used");
             return;
         }
 
@@ -78,21 +78,21 @@ public partial class Alias
 
         if (bindingChars > 1)
         {
-            Print.Error("You can use only one '&' on alias.");
+            Print.Error("You can use only one '&' for an alias..");
             return;
         }
 
         AliasItem aliasItem = new AliasItem(name, alias);
 
         aliases!.Add(aliasItem);
-        Markup.Rich("Alias sucessfully created: \n"
+        Markup.Rich("Alias successfully created: \n"
                   + $"$[cyan]name$[white]: {name}\n"
                   + $"$[magenta]alias$[white]: {alias}");
     }
 
     private void RemoveAlias()
     {
-        Print.Inline("\n\nEnter the number of delete (enter for return) > ");
+        Print.Inline("\n\nEnter the index to delete (press Enter to return) >");
         string input = Console.ReadLine()!;
         if (input == "") return;
 
