@@ -183,8 +183,6 @@ public partial class Dir : Module
             return;
         }
 
-        Console.WriteLine();
-
         items.Sort((a, b) => b.name.Length.CompareTo(a.name.Length));
 
         for (int s = 0; s < items.Count; s++)

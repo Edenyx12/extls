@@ -26,6 +26,7 @@ public abstract class Module
         foreach (var method in meta.Methods)
         {
             string aliases = string.Empty;
+            string methodName = string.Empty;
 
             if (method.Aliases.Length == 1) aliases = method.Aliases[0];
             else if (method.Aliases.Length > 1)
@@ -36,6 +37,14 @@ public abstract class Module
                         aliases += method.Aliases[i];
                     else aliases += $"{method.Aliases[i]}, ";
                 }
+            }
+
+            methodName += char.ToUpper(method.MethodName[0]);
+
+            for (int i = 1; i < method.MethodName.Length; i++)
+            {
+                if (char.IsUpper(method.MethodName[i])) methodName += ' ';
+                methodName += method.MethodName[i];
             }
 
             methods += $"  \\*  **$[mint]{method.MethodName}$[white]**: {aliases}\n";
