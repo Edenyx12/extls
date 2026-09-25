@@ -10,10 +10,6 @@
     <IlLinkArgs>--keep-dep-attributes true</IlLinkArgs>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="NCalc" Version="6.4.0" />
-  </ItemGroup>
-
   <Target Name="ExtractVersionFromProgram" BeforeTargets="PackAsLibraryAfterPublish">
     <ReadLinesFromFile File="Program.cs">
       <Output TaskParameter="Lines" ItemName="ProgramLines" />
