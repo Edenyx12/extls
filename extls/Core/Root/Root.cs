@@ -5,38 +5,43 @@ namespace extls.Core;
 
 public partial class Root
 {
-    private string label = new string(
-        $"\n  $[Octavus]extls$[white] $[darkgray]v{Global.Version}" +
-        $"\n  $[navy]usage: **extls <MODULE> <MODULE-ARGS> <ARGS>**$[white]" +
-        $"\n  $[darkgray]or:    extls root <args>\n"
-    );
-    private string labelVersion = new string(
-        $"\n  $[Octavus]extls$[white] **$[platypus]v{Global.Version}**" +
-        $"\n  $[navy]usage: **extls <MODULE> <MODULE-ARGS> <ARGS>**$[white]" +
-        $"\n  $[darkgray]or:    **extls root <args>**$[white]\n"
-    );
+    private string label = new string($"  $[Octavus]extls$[white] $[darkgray]v{Global.Version}\n");
+    private string labelVersion = new string($"  $[Octavus]extls$[white] **$[platypus]v{Global.Version}**\n");
     private string help = new string(
-        $"  Help:\n"
+        "  Help:\n" +
+        "  * $[mint]`version`$[white], $[mint]`--version`$[white], $[mint]`-v`$[white] - colorize the version in the label.\n" +
+        "  * $[mint]`help`$[white]   , $[mint]`--help`$[white]   , $[mint]`-h`$[white] - show this help.\n" +
+        "  * $[mint]`modules`$[white], $[mint]`--modules`$[white], $[mint]`-m`$[white] - show a list of modules.\n" +
+        "  * $[mint]`where`$[white]  , $[mint]`--where`$[white]  , $[mint]`-w`$[white] - add the bin path to the label.\n\n" +
+        "  * $[festive]`--clear-cache`$[white] - clear the reflection module cache\n"
+    );
+    private string usage = new string(
+        $"  $[navy]usage: **extls <MODULE> <MODULE-ARGS> <ARGS>**$[white]" +
+        $"\n  $[darkgray]or:    extls root <args>\n"
     );
 
     public void Dispatch()
     {
-        if (Arguments.Get("v", "version")) Markup.Rich(labelVersion);
-        else Version();
+        if (Arguments.GetForce("v", "version")) Version();
+        else Label();
 
-        if (Arguments.Get("where")) Where();
+        if (Arguments.GetForce("w", "where")) Where();
 
-        if (Arguments.Get("h", "help"))
+        Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
+
+        if (Arguments.GetForce("h", "help"))
         {
-            Out.Line($"  {new string('─', 40)}");
             Help();
+            Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
         }
 
-        if (Arguments.Get("modules"))
+        if (Arguments.GetForce("m", "modules"))
         {
-            Out.Line($"  {new string('─', 40)}");
             Modules();
+            Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
         }
+
+        Markup.Rich(usage);
     }
 
     public void Label() => Markup.Rich(label);
@@ -54,12 +59,35 @@ public partial class Root
     }
     public void Modules()
     {
-        Out.Line("  modules:");
+        string modules = $"  $[mint]Modules ({Global.Modules.Count}):$[white]\n";
 
         foreach (var key in Global.Modules)
         {
-            var module = Global.GetModule(key.Key[0]);
-            if (module != null) module.Version();
+            Module? module = Global.GetModule(key.Key[0]);
+            ModuleMeta? meta = Global.GetModuleMeta(module!.name);
+
+            if (meta is null) continue;
+
+            int dot = meta.TypeName.LastIndexOf('.') + 1;
+            string moduleName = meta.TypeName[dot..];
+            string aliases = "**$[nona]without aliases$[white]**";
+
+            if (meta.Aliases.Length == 1) aliases = meta.Aliases[0];
+            else if (meta.Aliases.Length > 1)
+            {
+                for (int i = 0; i < meta.Aliases.Length; i++)
+                {
+                    if (i == meta.Aliases.Length - 1)
+                        aliases += meta.Aliases[i];
+                    else aliases += $"{meta.Aliases[i]}, ";
+                }
+            }
+
+            modules += $"  \\*  **$[octavus]{moduleName}$[white]** " +
+                       $"$[darkgray]{module.version}$[white]: " +
+                       $"{aliases}";
         }
+
+        Markup.Rich(modules, true);
     }
 }

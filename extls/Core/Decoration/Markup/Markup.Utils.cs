@@ -15,7 +15,7 @@ public static partial class Markup
         for (int i = 0; i < text.Length; i++)
         {
             if (text[i] is '\\')
-                fix.Append('\\');
+                fix.Append(@"\\");
 
             fix.Append(text[i]);
         }

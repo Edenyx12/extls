@@ -40,6 +40,27 @@ public static class Arguments
 
         return false;
     }
+    
+    public static bool GetForce(params string[] args)
+    {
+        if (argv is null) return false;
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i].Length == 1)
+            {
+                foreach (Arg arg in argv)
+                    if (arg.Contains(args[i][0])) return true;
+
+                continue;
+            }
+
+            foreach (Arg arg in argv)
+                if (arg.Contains(args[i])) return true;
+
+        }
+        return false;
+    }
 
     public static string? GetRight(params string[] args)
     {
@@ -172,6 +193,8 @@ public static class Arguments
     {
         List<string> clean = new();
 
+        int count = 0;
+
         for (int arg = 0; arg < args.Length; arg++)
         {
             bool triggered = false;
@@ -187,7 +210,9 @@ public static class Arguments
                     if (File.Exists(Path.Combine(Global.RootPath, "modules.json")))
                         File.Delete(Path.Combine(Global.RootPath, "modules.json"));
                 
-                    Markup.Rich($"**$[blue]modules.json$[white]** deleted from $[yellow]{Markup.SafeBackslash(Global.RootPath)}");
+                    Markup.Rich($"[root] **$[octavus]modules.json$[white]** deleted from " +
+                                $"$[yellow]{Markup.SafeBackslash(Global.RootPath)}$[white]", true);
+                    count++;
                     break;
             }
 
@@ -195,6 +220,8 @@ public static class Arguments
 
             clean.Add(args[arg]);
         }
+
+        if (count > 0) Console.WriteLine();
 
         return clean.ToArray();
     }

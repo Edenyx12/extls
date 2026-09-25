@@ -12,7 +12,7 @@ public static partial class Global
 {
     public static Assembly Assembly = Assembly.GetExecutingAssembly();
     public static Platform Platform = Platform.Windows;
-    public static string Version = "0.5-alpha";
+    public static string Version = "0.5-beta";
     public static bool Verbose = false;
     public static readonly string RootPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
