@@ -12,6 +12,9 @@ public static partial class Markup
 
     public static void Rich(string code, bool lastWrap = false)
     {
+        Out.Inline("\x1b[23m");
+        Out.Inline("\x1b[22m");
+
         MarkupToken[] tokens = Parse(code);
 
         bool bold = false;
@@ -55,9 +58,21 @@ public static partial class Markup
         for (int i = 0; i < markup.Length; i++)
         {
 
-            if (Match(markup, i, @"\"))      { AppendAndSave(ref i, 1, MarkupTokenType.Shield); continue; }
-            else if (Match(markup, i, "**")) { AppendAndSave(ref i, 0, MarkupTokenType.Bold); continue; }
-            else if (Match(markup, i, "*"))  { AppendAndSave(ref i, 0, MarkupTokenType.Italic); continue; }
+            if (Match(markup, i, @"\"))
+            {
+                AppendAndSave(ref i, 1, MarkupTokenType.Shield);
+                continue;
+            }
+            else if (Match(markup, i, "**"))
+            {
+                AppendAndSave(ref i, 1, MarkupTokenType.Bold);
+                continue;
+            }
+            else if (Match(markup, i, "*"))
+            {
+                AppendAndSave(ref i, 0, MarkupTokenType.Italic);
+                continue;
+            }
             else if (Match(markup, i, "$"))
             {
                 i++;

@@ -67,7 +67,9 @@ public static class Arguments
         if (argv is null) return null;
         if (argraw is null) return null;
 
-        int index = GetIndex(args) + 1;
+        int index = GetIndex(args);
+        if (index is -1) return null;
+        else index += 1;
 
         foreach (Arg arg in argraw)
         {
