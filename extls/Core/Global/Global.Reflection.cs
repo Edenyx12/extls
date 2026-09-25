@@ -142,9 +142,18 @@ public static partial class Global
         
         if (methodIndex == -1) return false;
 
-        module.GetType()
+        try
+        {
+            module.GetType()
               .GetMethod(meta.Methods[methodIndex].MethodName)?
               .Invoke(module, null);
+        }
+        catch
+        {
+            throw new Exception(
+                $"Arguments detected in the signature of method `{meta.Methods[methodIndex].MethodName}`. " +
+                "The method cannot have arguments when called automatically.");
+        }
         
         return true;
     }

@@ -24,9 +24,14 @@ public class Program
             root.Dispatch();
             return;
         }
-        else if (moduleName is "v" or "--version" or "version")
+        else if (moduleName is "-v" or "--version" or "version")
         {
             root.Version();
+            return;
+        }
+        else if (moduleName is "-h" or "--help" or "help")
+        {
+            root.Help();
             return;
         }
 
@@ -38,6 +43,6 @@ public class Program
             return;
         }
         
-        Out.Warning($"Module not found: '{moduleName}'. Check modules with `extls modules`.");
+        Out.Warning($"Module not found: '{moduleName}'. Check modules with `extls root modules`.");
     }
 }
