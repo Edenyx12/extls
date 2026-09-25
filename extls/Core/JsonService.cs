@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using static extls.Core.Root;
+using static extls.Core.Global;
 
 namespace extls.Core
 {
@@ -29,7 +29,7 @@ namespace extls.Core
             }
             catch (Exception ex)
             {
-                Print.Error($"Failed to save JSON: {ex.Message}");
+                Out.Error($"Failed to save JSON: {ex.Message}");
                 return false;
             }
         }
@@ -47,7 +47,7 @@ namespace extls.Core
             }
             catch (Exception ex)
             {
-                Print.Error($"Failed to load JSON: {ex.Message}");
+                Out.Error($"Failed to load JSON: {ex.Message}");
                 return null!;
             }
         }

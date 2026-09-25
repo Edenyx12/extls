@@ -2,7 +2,7 @@
 {
     public static class Utils
     {
-        public static void InvalidOperation() => Print.Error(
+        public static void InvalidOperation() => Out.Error(
             "Fatal error! Failed to execute this command. Use '--help' for assistance.");
 
         public static string[] RemoveZeroCommand(string[] args)

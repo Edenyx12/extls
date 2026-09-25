@@ -2,23 +2,8 @@ using System.Reflection;
 
 namespace extls.Core;
 
-public enum Platform
+public static partial class Global
 {
-    Windows,
-    Linux
-}
-
-public static class Root
-{
-    public static Assembly Assembly = Assembly.GetExecutingAssembly();
-    public static Platform Platform = Platform.Windows;
-    public static string Version = "0.4.6-alpha";
-    public static readonly string RootPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".edx",
-        "extls"
-    );
-    
     private static Dictionary<string[], ModuleMeta>? _modules;
     public static Dictionary<string[], ModuleMeta> Modules
     {
@@ -52,12 +37,6 @@ public static class Root
         }
     }
 
-    static Root()
-    {
-        if (OperatingSystem.IsWindows()) Platform =  Platform.Windows;
-        else if (OperatingSystem.IsLinux()) Platform =  Platform.Linux;
-    }
-    
     static Dictionary<string[], ModuleMeta> GenerateReflectionCache()
     {
         var result = new Dictionary<string[], ModuleMeta>();
@@ -89,8 +68,7 @@ public static class Root
 
                 methods.Add(new MethodMeta(
                     method.Name,
-                    methodAttribute.Aliases,
-                    methodAttribute.Params)
+                    methodAttribute.Aliases)
                 );
             }
 
@@ -108,7 +86,17 @@ public static class Root
 
         return result;
     }
-    
+
+    public static ModuleMeta? GetModuleMeta(string name)
+    {
+        foreach (var key in Modules)
+            for (int i = 0; i < key.Key.Length; i++)
+                if (key.Key[i].Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return Modules[key.Key];
+        
+        return null;
+    }
+
     public static Module? GetModule(string name)
     {
         string moduleName = string.Empty;
@@ -134,17 +122,7 @@ public static class Root
         return Activator.CreateInstance(module) as Module;
     }
 
-    public static ModuleMeta GetModuleMeta(string name)
-    {
-        foreach (var key in Modules)
-            for (int i = 0; i < key.Key.Length; i++)
-                if (key.Key[i].Equals(name, StringComparison.OrdinalIgnoreCase))
-                    return Modules[key.Key];
-        
-        return null!;
-    }
-
-    public static bool ExecuteModule(Module module, ModuleMeta meta, string[] args)
+    public static bool ExecuteModule(Module module, ModuleMeta meta, string method)
     {
         if (module is null) return false;
 
@@ -154,7 +132,7 @@ public static class Root
         {
             for (int j = 0; j < meta.Methods[i].Aliases.Length; j++)
             {
-                if (args.Length > 0 && args[0].Equals(meta.Methods[i].Aliases[j], StringComparison.OrdinalIgnoreCase))
+                if (method.Equals(meta.Methods[i].Aliases[j], StringComparison.OrdinalIgnoreCase))
                 {
                     methodIndex = i;
                     break;
@@ -164,25 +142,9 @@ public static class Root
         
         if (methodIndex == -1) return false;
 
-        switch (meta.Methods[methodIndex].Params)
-        {
-            case Params.None:
-                module.GetType()
-                    .GetMethod(meta.Methods[methodIndex].MethodName)?
-                    .Invoke(module, null);
-                break;
-            case Params.Args:
-                string[] cleanArgs = Utils.RemoveZeroCommand(args);
-                module.GetType()
-                    .GetMethod(meta.Methods[methodIndex].MethodName)?
-                    .Invoke(module, new object[] { cleanArgs }); 
-                break;
-            case Params.OneArg:
-                module.GetType()
-                    .GetMethod(meta.Methods[methodIndex].MethodName)?
-                    .Invoke(module, new object[] { args[0] });
-                break;
-        }
+        module.GetType()
+              .GetMethod(meta.Methods[methodIndex].MethodName)?
+              .Invoke(module, null);
         
         return true;
     }

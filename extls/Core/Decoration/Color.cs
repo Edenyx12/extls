@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace extls.Core.Decoration;
 
 public readonly struct Color
@@ -38,7 +40,8 @@ public readonly struct Color
     }
     
     public override string ToString() => $"[{r}, {g}, {b}]";
-    
+    public bool Equals(Color c) => r == c.r && g == c.g && b == c.b;
+        
     public static Color HEXToColor(ReadOnlySpan<char> HEX)
     {
         ReadOnlySpan<char> hex = HEX;
@@ -64,5 +67,40 @@ public readonly struct Color
         if ((uint)val <= 5) return (byte)(val + 10);
 
         throw new ArgumentException($"Invalid HEX char: '{c}'", nameof(c));
+    }
+
+    public static string ColorToConsoleFg(Color c) => $"\x1b[38;2;{c.r};{c.g};{c.b}m";
+    public static string ColorToConsoleFg(ReadOnlySpan<char> HEX)
+    {
+        Color c = HEXToColor(HEX);
+        return $"\x1b[38;2;{c.r};{c.g};{c.b}m";
+    }
+    public static string ColorToConsoleBg(Color c) => $"\x1b[48;2;{c.r};{c.g};{c.b}m";
+    public static string ColorToConsoleBg(ReadOnlySpan<char> HEX)
+    {
+        Color c = HEXToColor(HEX);
+        return $"\x1b[48;2;{c.r};{c.g};{c.b}m";
+    }
+
+    public static Color Lighter(Color color, float light)
+    {
+        light = Math.Clamp(light, 0, 99999);
+
+        byte r = (byte)Math.Clamp(color.r + (255 - color.r) * light, 0, 255);
+        byte g = (byte)Math.Clamp(color.g + (255 - color.g) * light, 0, 255);
+        byte b = (byte)Math.Clamp(color.b + (255 - color.b) * light, 0, 255);
+
+        return new Color(r, g, b);
+    }
+
+    public static Color Darker(Color color, float dark)
+    {
+        dark = Math.Clamp(dark, 0, 99999);
+
+        byte r = (byte)Math.Clamp(color.r * (1 - dark), 0, 255);
+        byte g = (byte)Math.Clamp(color.g * (1 - dark), 0, 255);
+        byte b = (byte)Math.Clamp(color.b * (1 - dark), 0, 255);
+
+        return new Color(r, g, b);
     }
 }

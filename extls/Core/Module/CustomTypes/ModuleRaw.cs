@@ -2,17 +2,35 @@ namespace extls.Core.Modules;
 
 public abstract class ModuleRaw : Module
 {
-    public override bool Dispatch(string[] args) => DispatchRaw(args);
+    public override bool Dispatch(string arg) => DispatchRaw(arg);
     
-    public virtual bool DispatchRaw(string[] args)
+    public virtual bool DispatchRaw(string arg)
     {
-        if (args.Length <= 0 || (args[0] is "-v" or "--version"))
+        if (arg is "-v" or "--version")
         {
             Version();
             return true;
         }
 
-        if (args[0] is "help" or "-h" or "--help")
+        if (arg is "help" or "-h" or "--help")
+        {
+            Help();
+            return true;
+        }
+
+        return false;
+    }
+    public virtual bool DispatchRaw2(string arg)
+    {
+        if (arg == "") return false;
+
+        if (arg is "-v" or "--version")
+        {
+            Version();
+            return true;
+        }
+
+        if (arg is "help" or "-h" or "--help")
         {
             Help();
             return true;

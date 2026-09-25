@@ -4,13 +4,11 @@ public struct MethodMeta
 {
     public string MethodName { get; set; }
     public string[] Aliases { get; set; }
-    public Params Params { get; set; }
 
-    public MethodMeta(string methodName, string[] aliases, Params @params = Params.None)
+    public MethodMeta(string methodName, string[] aliases)
     {
         this.MethodName = methodName;
         this.Aliases = aliases;
-        this.Params = @params;
     }
 }
 public class ModuleMeta

@@ -3,15 +3,12 @@ using System.Runtime.CompilerServices;
 
 namespace extls.Core.Decoration;
 
-public enum MarkupTokenType { Text, Shield, Color, AutoColor, Bold, Italic }
+public enum MarkupTokenType {Text, Shield, Color, AutoColor, Bold, Italic}
 public readonly record struct MarkupToken(string Token, MarkupTokenType Type);
 
-public static class Markup
+public static partial class Markup
 {
-    static Markup()
-    {
-        System.Console.OutputEncoding = System.Text.Encoding.UTF8;
-    }
+    static Markup() => System.Console.OutputEncoding = System.Text.Encoding.UTF8;
 
     public static void Rich(string code, bool lastWrap = false)
     {
@@ -24,14 +21,14 @@ public static class Markup
         {
             switch (tokens[i].Type)
             {
-                case MarkupTokenType.Text or MarkupTokenType.Shield: Print.Inline(tokens[i].Token); break;
+                case MarkupTokenType.Text or MarkupTokenType.Shield: Out.Inline(tokens[i].Token); break;
                 case MarkupTokenType.Italic:
                     italic = !italic;
-                    Print.Inline(italic ? "\x1b[3m" : "\x1b[23m");
+                    Out.Inline(italic ? "\x1b[3m" : "\x1b[23m");
                     break;
                 case MarkupTokenType.Bold:
                     bold = !bold;
-                    Print.Inline(bold ? "\x1b[1m" : "\x1b[22m");
+                    Out.Inline(bold ? "\x1b[1m" : "\x1b[22m");
                     break;
                 case MarkupTokenType.Color:
                     PrintColor(new Color(tokens[i].Token)); 
@@ -39,7 +36,7 @@ public static class Markup
                 case MarkupTokenType.AutoColor:
                     if (!SetConsoleColor(tokens[i].Token)) {
                         Color c = ParseColor(tokens[i].Token);
-                        Print.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m");
+                        Out.Inline(Color.ColorToConsoleFg(c));
                     } break;
             }
         }
@@ -47,57 +44,38 @@ public static class Markup
         if (lastWrap) Console.WriteLine();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PrintColor(Color c) => Print.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m");
+        void PrintColor(Color c) => Out.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m");
     }
 
-    public static string FixBackslash(string text)
-    {
-        int index = text.IndexOf('\\');
-
-        if (index < 0) return text;
-
-        var fix = new StringBuilder(text.Length + 1);
-
-        for (int i = 0; i < text.Length; i++)
-        {
-            if (text[i] is '\\')
-                fix.Append('\\');
-
-            fix.Append(text[i]);
-        }
-
-        return fix.ToString();
-    }
-
-    private static MarkupToken[] Parse(string code)
+    private static MarkupToken[] Parse(string markup)
     {
         var tokens = new List<MarkupToken>();
         var raw = new StringBuilder();
 
-        for (int i = 0; i < code.Length; i++)
+        for (int i = 0; i < markup.Length; i++)
         {
 
-            if (Match(code, i, "\\")) { AppendAndSave(ref i, 1, MarkupTokenType.Shield); continue; }
-            else if (Match(code, i, "**")) { AppendAndSave(ref i, 0, MarkupTokenType.Bold); continue; }
-            else if (Match(code, i, "*")) { AppendAndSave(ref i, 0, MarkupTokenType.Italic); continue; }
-            else if (Match(code, i, "$"))
+            if (Match(markup, i, @"\"))      { AppendAndSave(ref i, 1, MarkupTokenType.Shield); continue; }
+            else if (Match(markup, i, "**")) { AppendAndSave(ref i, 0, MarkupTokenType.Bold); continue; }
+            else if (Match(markup, i, "*"))  { AppendAndSave(ref i, 0, MarkupTokenType.Italic); continue; }
+            else if (Match(markup, i, "$"))
             {
                 i++;
 
-                if (Match(code, i, "["))
+                if (Match(markup, i, "["))
                 {
                     i++;
 
                     var c = new StringBuilder();
 
-                    if (Match(code, i, "#"))
+                    if (Match(markup, i, "#"))
                     {
                         i++;
                         AppendAndSave(ref i, 6, MarkupTokenType.Color);
                         continue;
                     }
 
-                    int len = FindStopToken(code, i, "]");
+                    int len = FindStopToken(markup, i, "]");
                     AppendAndSave(ref i, len, MarkupTokenType.AutoColor);
                 }
 
@@ -105,7 +83,7 @@ public static class Markup
             }
 
 
-            raw.Append(code[i]);
+            raw.Append(markup[i]);
         }
 
         if (raw.Length > 0)
@@ -122,12 +100,21 @@ public static class Markup
                 raw.Clear();
             }
 
-            int end = index + length;
-
-            while (index < end)
+            if (type is MarkupTokenType.Shield)
             {
-                raw.Append(code[index]);
                 index++;
+                raw.Append(markup[index]);
+                index++;
+            }
+            else
+            {
+                int end = index + length;
+
+                while (index < end)
+                {
+                    raw.Append(markup[index]);
+                    index++;
+                }
             }
 
             tokens.Add(new MarkupToken(raw.ToString(), type));
@@ -136,18 +123,7 @@ public static class Markup
 
         return tokens.ToArray();
     }
-    private static bool Match(string str, int index, string target)
-    {
-        if (index < 0 || index + target.Length > str.Length) return false;
-
-        ReadOnlySpan<char> slice = str.AsSpan(index, target.Length);
-        return slice.SequenceEqual(target);
-    }
-    private static int FindStopToken(string str, int index, string stopToken)
-    {
-        int stop = str.IndexOf(stopToken, index, StringComparison.Ordinal);
-        return stop == -1 ? -1 : stop - index;
-    }
+    
     private static bool SetConsoleColor(ReadOnlySpan<char> name)
     {
         switch (name)

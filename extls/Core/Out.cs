@@ -2,10 +2,8 @@
 
 namespace extls.Core;
 
-public static class Print
+public static class Out
 {
-    public static bool verbose = false;
-
     public static void Line(string message) => RawLine(message);
     public static void Line(string message, ConsoleColor color) => LineColor(message, color);
     public static void Inline(string message) => RawInline(message);
@@ -17,7 +15,7 @@ public static class Print
 
     public static void Debug(string message)
     {
-        if (!verbose) return;
+        if (!Global.Verbose) return;
 
         Line(message, ConsoleColor.Cyan);
     }
@@ -44,5 +42,16 @@ public static class Print
     {
         Console.Write(message);
         Console.Out.Flush();
-    }  
+    }
+
+    public static void EnableAlternateBuffer()
+    {
+        Console.Write("\x1b[?1049h");
+        Console.SetCursorPosition(0, 0); 
+    }
+
+    public static void DisableAlternateBuffer()
+    {
+        Console.Write("\x1b[?1049l");
+    }
 }

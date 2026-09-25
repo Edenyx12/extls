@@ -6,7 +6,7 @@ namespace extls.Tools;
 public partial class Dir
 {
     private FileIconPack fileIconUsable = new FileIconPack("", "");
-    private void ExecuteTree(string path, int currentLevel, int maxLevels, bool summary, byte typeFilter, ref int sumDir, ref int sumF)
+    private void ExecuteTree(string path, int currentLevel, int maxLevels, bool summary, byte typeFilter, ref int summaryFolders, ref int summaryFiles)
     {
         FolderStatus status = OpenFolder(path);
 
@@ -27,7 +27,7 @@ public partial class Dir
                 _ => "$[red](error)$[white]"
             };
 
-            if (Root.Platform is Platform.Windows)
+            if (Global.Platform is Platform.Windows)
                 Markup.Rich($"{indent}$[yellow]{folderIcon}{folderName}\\\\ {statusTag}", true);
             else
             {
@@ -52,7 +52,7 @@ public partial class Dir
 
                         if (config.IsIgnored(Path.GetExtension(fileName))) continue;
 
-                        sumF++;
+                        summaryFiles++;
 
                         if (!summary)
                         {
@@ -80,8 +80,8 @@ public partial class Dir
                 {
                     foreach (string subDir in Directory.EnumerateDirectories(path))
                     {
-                        sumDir++;
-                        ExecuteTree(subDir, currentLevel + 1, maxLevels, summary, typeFilter, ref sumDir, ref sumF);
+                        summaryFolders++;
+                        ExecuteTree(subDir, currentLevel + 1, maxLevels, summary, typeFilter, ref summaryFolders, ref summaryFiles);
                     }
                 }
                 catch { }

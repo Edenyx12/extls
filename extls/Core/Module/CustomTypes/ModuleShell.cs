@@ -3,56 +3,56 @@ using extls.Core.Decoration;
 
 namespace extls.Core.Modules;
 
-public abstract class ModuleMenu : Module
+public abstract class ModuleShell : Module
 {
     /// <summary>
-    /// Stopwatch to measure the time taken for the menu to execute (only with verbose output).
+    /// Stopwatch to measure the time taken for the Shell to execute (only with verbose output).
     /// </summary>
-    protected Stopwatch menuTime = new Stopwatch();
+    protected Stopwatch shellTime = new Stopwatch();
     /// <summary>
-    /// If true, the menu will not read input from the user. 
-    /// This is useful for testing or when the menu is being used in a non-interactive environment.
+    /// If true, the Shell will not read input from the user. 
+    /// This is useful for testing or when the Shell is being used in a non-interactive environment.
     /// </summary>
     protected bool lockread = false;
     /// <summary>
-    /// Color type for the menu prompt. 0 - white, 1 - red, 2 - green, 3 - yellow
+    /// Color type for the Shell prompt. 0 - white, 1 - red, 2 - green, 3 - yellow
     /// </summary>
     protected byte colorType = 0;
 
     /// <summary>
     /// Dispatches the command to the appropriate method based on the arguments provided.
-    /// This method overrided from the base Module class to provide menu-specific functionality.
+    /// This method overrided from the base Module class to provide Shell-specific functionality.
     /// </summary>
-    public override bool Dispatch(string[] args)
+    public override bool Dispatch(string arg)
     {
-        if (args.Length > 0 && (args[0] is "-v" or "--version"))
+        if (arg is "-v" or "--version")
         {
             Version();
             return true;
         }
 
-        if (args.Length > 0 && (args[0] is "help" or "-h" or "--help"))
+        if (arg is "help" or "-h" or "--help")
         {
             Help();
             return true;
         }
 
-        menuTime.Start();
+        shellTime.Start();
 
         OnStart();
-        ShowMenu();
+        ShowShell();
         OnExit();
 
-        menuTime.Stop();
+        shellTime.Stop();
 
         return true;
     }
 
     /// <summary>
-    /// This method is responsible for drawing the menu to the console.
-    /// It should be overridden in derived classes to provide custom menu layouts.
+    /// This method is responsible for drawing the Shell to the console.
+    /// It should be overridden in derived classes to provide custom Shell layouts.
     /// </summary>
-    protected abstract void DrawMenu();
+    protected abstract void DrawShell();
     /// <summary>
     /// This method is called after the user has provided input.
     /// It should be overridden in derived classes to handle the input appropriately.
@@ -60,14 +60,14 @@ public abstract class ModuleMenu : Module
     protected abstract void AfterInput(string input);
 
     /// <summary>
-    /// This method is responsible for displaying the menu and handling user input.
-    /// It will continue to display the menu until the user exits or an error occurs.
+    /// This method is responsible for displaying the Shell and handling user input.
+    /// It will continue to display the Shell until the user exits or an error occurs.
     /// </summary>
-    protected virtual void ShowMenu()
+    protected virtual void ShowShell()
     {
         while (true)
         {
-            DrawMenu();
+            DrawShell();
 
             string color = colorType switch {
                 1 => "$[red]>$[white]",
@@ -76,7 +76,7 @@ public abstract class ModuleMenu : Module
                 _ => "$[white]>$[white]"
             };
             
-            Markup.Rich($"\n$[cyan]{name}$[white] Menu {color} ", false);
+            Markup.Rich($"\n$[cyan]{name}$[white] Shell {color} ", false);
             colorType = 0;
             string? input = Console.ReadLine();
             Console.WriteLine();
@@ -110,33 +110,33 @@ public abstract class ModuleMenu : Module
     }
 
     /// <summary>
-    /// This method is called when the menu starts.
+    /// This method is called when the Shell starts.
     /// It can be overridden to provide custom behavior,
     /// such as displaying a welcome message or initializing resources.
     /// </summary>
     protected virtual void OnStart()
     {
-        Markup.Rich($"$[green]{name}$[white] Menu - $[cyan]{version}$[white].\n" +
+        Markup.Rich($"$[green]{name}$[white] Shell - $[cyan]{version}$[white].\n" +
                     $"$[darkgray]`/h` for help, `/v` for version.$[white]", true);
     }
     /// <summary>
-    /// This method is called when the menu exits.
+    /// This method is called when the Shell exits.
     /// It can be overridden to provide custom behavior,
     /// such as displaying a farewell message or cleaning up resources.
     /// </summary>
     protected virtual void OnExit()
     {
-        Markup.Rich($"$[gray]Exiting *{name}* Menu.", true);
+        Markup.Rich($"$[gray]Exiting *{name}* Shell.", true);
 
-        if (Print.verbose)
+        if (Global.Verbose)
         {
-            TimeSpan elapsed = menuTime.Elapsed;
+            TimeSpan elapsed = shellTime.Elapsed;
 
             string time = elapsed.TotalSeconds >= 1
                 ? $"{elapsed.TotalSeconds:F2}s"
                 : $"{elapsed.TotalMilliseconds:F2}ms";
 
-            Markup.Rich($"$[darkgray]Menu execution time: $[yellow]{time}", true);
+            Markup.Rich($"$[darkgray]Shell execution time: $[yellow]{time}", true);
         }
     }
 }

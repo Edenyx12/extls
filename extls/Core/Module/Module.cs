@@ -2,68 +2,82 @@
 
 namespace extls.Core;
 
-public struct HelpSlot
-{
-    public string name;
-    public string description;
-    public string[] args;
-    public string example;
-
-    public HelpSlot(string name, string description, string[] args, string example)
-    {
-        this.name = name;
-        this.description = description;
-        this.args = args;
-        this.example = example;
-    }
-}
-
 public abstract class Module
 {
-    public string? name;
-    public string? version;
-    protected HelpSlot[]? commands;
+    public string name = "module";
+    public string version = "0.0";
 
-    public virtual void Help()
+    public virtual void Label()
     {
-        Markup.Rich($"Help of module $[blue]'{name}'$[white]:\n", true);
-        for (int i = 0; i < commands?.Length; i++)
-        {
-            bool isArgs = commands?[i].args != null && commands[i].args.Length > 0;
-            bool isExample = !(commands?[i].example is null or "");
-            Markup.Rich((isArgs && isExample && i != 0 ? "\n" : "") +
-                $"\\* $[yellow]{commands?[i].name}$[white] - {commands?[i].description}", true);
+        Markup.Rich($"\n  **$[catppuccin]{name}$[white]** $[darkgray]{version}$[white]", true);
+        Markup.Line(new Gradient(Color.Octavus, Color.Darker(Color.Navy, 0.5f)));
 
-            if (isArgs)
+        string methods = string.Empty;
+
+        var meta = Global.GetModuleMeta(name);
+        if (meta is null) 
+        {
+            methods = "  $[yellow]Without commands.$[white]\n";
+            Markup.Rich(methods, true);
+            return;
+        }
+        else methods = "  $[#82db70]Commands:$[white]\n";
+
+        foreach (var method in meta.Methods)
+        {
+            string aliases = string.Empty;
+
+            if (method.Aliases.Length == 1) aliases = method.Aliases[0];
+            else if (method.Aliases.Length > 1)
             {
-                foreach (string arg in commands?[i].args!)
+                for (int i = 0; i < method.Aliases.Length; i++)
                 {
-                    if (arg is null or "") continue;
-                    Print.Line($"  {arg}", ConsoleColor.DarkGray);
+                    if (i == method.Aliases.Length - 1)
+                        aliases += method.Aliases[i];
+                    else aliases += $"{method.Aliases[i]}, ";
                 }
             }
 
-            if (isExample)
-                Markup.Rich($"  $[darkgray]example: {commands?[i].example}.", true);
+            methods += $"  \\*  **$[mint]{method.MethodName}$[white]**: {aliases}\n";
         }
-        Console.WriteLine("\n");
-    }
-    public virtual void Version() => Markup.Rich($"\nModule '$[blue]{name}$[white]' \\* $[cyan]{version}$[white].");
 
-    public virtual bool Dispatch(string[] args)
+        Markup.Rich(methods, true);
+    }
+
+    public virtual void Help()
     {
-        if (args.Length <= 0 || (args[0] is "-v" or "--version"))
+        
+    }
+    public virtual void Version()
+        => Markup.Rich($"\nModule '**$[catppuccin]{name}$[white]**': **$[sextus]{version}$[white]** version.");
+
+    public virtual bool Dispatch(string arg)
+    {
+        if (arg == "")
+        {
+            Label();
+            return true;
+        }
+
+        if (arg is "-v" or "--version")
         {
             Version();
             return true;
         }
 
-        if (args[0] is "help" or "-h" or "--help")
+        if (arg is "help" or "-h" or "--help")
         {
             Help();
             return true;
         }
 
-        return Root.ExecuteModule(this, Root.GetModuleMeta(name!), args);
+        var meta = Global.GetModuleMeta(name);
+        if (meta is null)
+        {
+            Utils.InvalidOperation();
+            return false;
+        }
+
+        return Global.ExecuteModule(this, meta, arg);
     }
 }
