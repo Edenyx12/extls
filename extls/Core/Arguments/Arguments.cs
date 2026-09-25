@@ -5,6 +5,7 @@ namespace extls.Core;
 
 public static class Arguments
 {
+    public static bool UsedGlobalArgs = false;
     public static Arg[]? argv;
     public static Arg[]? arglong;
     public static Arg[]? argshorts;
@@ -14,6 +15,10 @@ public static class Arguments
     {
         if (args is null) return;
         if (args.Length == 0) return;
+        argv = null;
+        arglong = null;
+        argshorts = null;
+        argraw = null;
 
         string[] clean = ParseGlobal(args);
         Parse(clean);
@@ -217,6 +222,8 @@ public static class Arguments
                     count++;
                     break;
             }
+
+            UsedGlobalArgs = triggered;
 
             if (triggered) continue;
 

@@ -126,7 +126,7 @@ public partial class Dir : Module
 
         if (path is null)
         {
-            Out.Error("Unknown path.");
+            path = Directory.GetCurrentDirectory();
             return;
         }
 

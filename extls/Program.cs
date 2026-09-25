@@ -1,4 +1,6 @@
-﻿using extls.Core;
+﻿using System.Collections.Immutable;
+using extls.Core;
+using extls.Core.Decoration;
 
 namespace extls;
 
@@ -14,24 +16,36 @@ public class Program
             return;
         }
 
-        string moduleName = args[0].ToLower();;
-        string[] cleanArgs = args[1..];
+        Arguments.Initialize(args);
+        bool announce = root.Dispatch(true);
 
-        Arguments.Initialize(cleanArgs);
+        if (announce || Arguments.UsedGlobalArgs) return;
+
+        string? moduleName = null;
+
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (Markup.Match(args[i], 0, "--")) continue;
+            else if (Markup.Match(args[i], 0, "-")) continue;
+
+            moduleName = args[i].ToLower();
+            break;
+        }
+
+        if (moduleName is null)
+        {
+            Utils.InvalidOperation();
+            return;
+        }
+
+        List<string> cleanArgs = args.ToList();
+        cleanArgs.Remove(moduleName);
+
+        Arguments.Initialize(cleanArgs.ToArray());
 
         if (moduleName is "root")
         {
-            root.Dispatch();
-            return;
-        }
-        else if (moduleName is "-v" or "--version" or "version")
-        {
-            root.Version();
-            return;
-        }
-        else if (moduleName is "-h" or "--help" or "help")
-        {
-            root.Help();
+            root.Dispatch(true);
             return;
         }
 
@@ -39,10 +53,11 @@ public class Program
         
         if (module != null)
         {
-            module.Dispatch(cleanArgs.Length > 0 ? cleanArgs[0] : "");
+            module.Dispatch(cleanArgs.Count > 0 ? cleanArgs[0] : "");
             return;
         }
         
-        Out.Warning($"Module not found: '{moduleName}'. Check modules with `extls root modules`.");
+        if (!announce)
+            Out.Warning($"Module not found: '{moduleName}'. Check modules with `extls root modules`.");
     }
 }

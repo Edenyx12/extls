@@ -20,28 +20,59 @@ public partial class Root
         $"\n  $[darkgray]or:    extls root <args>\n"
     );
 
-    public void Dispatch()
+    public bool Dispatch(bool silent)
     {
-        if (Arguments.GetForce("v", "version")) Version();
-        else Label();
+        bool announce = false;
+        bool label = false;
 
-        if (Arguments.GetForce("w", "where")) Where();
+        if (Arguments.GetForce("v", "version"))
+        {
+            Version();
+            label = true;
+            announce = true;
+        }
+        else if (!silent) Label();
 
-        Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
+        if (Arguments.GetForce("w", "where"))
+        {
+            if (!label)
+            {
+                Label();
+                label = true;
+            }
+
+            Where();
+            announce = true;
+        }
+
+        if (!silent || announce)
+            Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
 
         if (Arguments.GetForce("h", "help"))
         {
+            if (!label)
+            {
+                Label();
+                label = true;
+            }
+
             Help();
             Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
+            announce = true;
         }
 
         if (Arguments.GetForce("m", "modules"))
         {
+            if (!label) Label();
+
             Modules();
             Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
+            announce = true;
         }
 
-        Markup.Rich(usage);
+        if (!silent || announce) Markup.Rich(usage);
+
+        return announce;
     }
 
     public void Label() => Markup.Rich(label);
