@@ -2,16 +2,18 @@
 
 namespace extls.Core;
 
+public enum OutType{Out, Err}
+
 public static class Out
 {
-    public static void Line(string message) => RawLine(message);
-    public static void Line(string message, ConsoleColor color) => LineColor(message, color);
-    public static void Inline(string message) => RawInline(message);
-    public static void Inline(string message, ConsoleColor color) => InlineColor(message, color);
+    public static void Line(string message, OutType type = OutType.Out) => OutLine(message, type);
+    public static void Line(string message, ConsoleColor color, OutType type = OutType.Out) => LineColor(message, color, type);
+    public static void Inline(string message, OutType type = OutType.Out) => OutInline(message, type);
+    public static void Inline(string message, ConsoleColor color, OutType type = OutType.Out) => InlineColor(message, color, type);
 
-    public static void Error(string message) => LineColor(message, ConsoleColor.Red);
-    public static void Warning(string message) => LineColor(message, ConsoleColor.Yellow);
-    public static void Info(string message) => LineColor(message, ConsoleColor.Gray);
+    public static void Error(string message, OutType type = OutType.Out) => LineColor(message, ConsoleColor.Red, type);
+    public static void Warning(string message, OutType type = OutType.Out) => LineColor(message, ConsoleColor.Yellow, type);
+    public static void Info(string message, OutType type = OutType.Out) => LineColor(message, ConsoleColor.Gray, type);
 
     public static void Debug(string message)
     {
@@ -20,28 +22,47 @@ public static class Out
         Line(message, ConsoleColor.Cyan);
     }
 
-    private static void LineColor(string message, ConsoleColor color)
+    private static void LineColor(string message, ConsoleColor color, OutType type)
     {
         Console.ForegroundColor = color;
-        RawLine(message);
+        OutLine(message, type);
         Console.ResetColor();
     }
-    private static void InlineColor(string message, ConsoleColor color)
+    private static void InlineColor(string message, ConsoleColor color, OutType type)
     {
         Console.ForegroundColor = color;
-        RawInline(message);
+        OutInline(message, type);
         Console.ResetColor();
     }
 
-    private static void RawLine(string message)
+    private static void OutLine(string message, OutType type)
     {
-        Console.WriteLine(message);
-        Console.Out.Flush();
+        switch (type)
+        {
+            case OutType.Out:
+                Console.Out.WriteLine(message);
+                Console.Out.Flush();
+                break;
+            case OutType.Err:
+                Console.Error.WriteLine(message);
+                Console.Error.Flush();
+                break;
+        }
     }
-    private static void RawInline(string message)
+
+    private static void OutInline(string message, OutType type)
     {
-        Console.Write(message);
-        Console.Out.Flush();
+        switch (type)
+        {
+            case OutType.Out:
+                Console.Out.Write(message);
+                Console.Out.Flush();
+                break;
+            case OutType.Err:
+                Console.Error.Write(message);
+                Console.Error.Flush();
+                break;
+        }
     }
 
     public static void EnableAlternateBuffer()

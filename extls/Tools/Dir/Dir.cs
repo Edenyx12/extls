@@ -27,7 +27,7 @@ public partial class Dir : Module
     public Dir()
     {
         name = "dir";
-        version = "0.6.10b";
+        version = "0.6.11b";
 
         string path = Path.Combine(Global.RootPath, "config", "dir-config.json");
 
@@ -62,7 +62,7 @@ public partial class Dir : Module
                      "\nUsage: <type: $[genesis]`folder`$[white] or $[octavus]`file`$[white]> " +
                      "<name: with extension> " +
                      "\\[ path: if missing, uses the current directory\\] ",
-        aliases: ["create", "c"]
+        aliases: ["create", "c", "mk"]
     )]
     public void Create()
     {
@@ -114,7 +114,7 @@ public partial class Dir : Module
 
     [MethodName(
         description: "Displays a tree of folders and files.",
-        aliases: ["tree", "tr"]
+        aliases: ["tree", "tr", "ls"]
     )]
     public void Tree()
     {
@@ -125,17 +125,13 @@ public partial class Dir : Module
         if (int.TryParse(Arguments.GetRight("r", "recursive"), out int recursiveLevels)){}
         else recursiveLevels = recursive ? 999999 : 1;
 
-        if (path is null)
-        {
-            path = Directory.GetCurrentDirectory();
-            return;
-        }
+        if (path is null) path = Directory.GetCurrentDirectory();
 
         if (!config!.mini)
             Markup.Rich($"Scan result of path $[{
                 (Global.Platform is Platform.Windows ? "yellow" : "#7dbeff")
-            }]'{Markup.SafeBackslash(path)}'$[white]:\n", true);
-        else Console.WriteLine();
+            }]'{Markup.SafeBackslash(path)}'$[white]:\n", true, OutType.Err);
+        else Out.Line("", OutType.Err);
 
         Stopwatch time = Stopwatch.StartNew();
 
@@ -159,16 +155,17 @@ public partial class Dir : Module
         }
 
         time.Stop();
-        if (Global.Verbose) Markup.Rich($"\nScanned in: $[#d375ff]{time.Elapsed}", true);
-        Console.WriteLine();
+        if (Global.Verbose) Markup.Rich($"\nScanned in: $[#d375ff]{time.Elapsed}", true, OutType.Err);
     }
 
     [MethodName(
         description: "Displays folders and files arranged in a grid.",
-        aliases: ["grid", "gr", "grd"]
+        aliases: ["grid", "gr", "grd", "g"]
     )]
     public void Grid()
     {
+        Out.Line("", OutType.Err);
+
         string path = Directory.GetCurrentDirectory();
 
         List<GridItem> items = new();
@@ -228,8 +225,9 @@ public partial class Dir : Module
 
             Markup.Rich($"$[{(items[i].isFolder ? (Global.Platform is Platform.Linux ? "#7dbeff" : "yellow") : fileIconUsable.color)}]{output}");
         }
-    }
 
+        Out.Line("", OutType.Err);
+    }
 
     [MethodName(
         description: "View the config.",

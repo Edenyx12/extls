@@ -69,15 +69,27 @@ public readonly struct Color
         throw new ArgumentException($"Invalid HEX char: '{c}'", nameof(c));
     }
 
-    public static string ColorToConsoleFg(Color c) => $"\x1b[38;2;{c.r};{c.g};{c.b}m";
+    public static string ColorToConsoleFg(Color c)
+    {
+        if (Console.IsOutputRedirected) return "";
+        return $"\x1b[38;2;{c.r};{c.g};{c.b}m";
+    }
     public static string ColorToConsoleFg(ReadOnlySpan<char> HEX)
     {
+        if (Console.IsOutputRedirected) return "";
+
         Color c = HEXToColor(HEX);
         return $"\x1b[38;2;{c.r};{c.g};{c.b}m";
     }
-    public static string ColorToConsoleBg(Color c) => $"\x1b[48;2;{c.r};{c.g};{c.b}m";
+    public static string ColorToConsoleBg(Color c)
+    {
+        if (Console.IsOutputRedirected) return "";
+        return $"\x1b[48;2;{c.r};{c.g};{c.b}m";
+    }
     public static string ColorToConsoleBg(ReadOnlySpan<char> HEX)
     {
+        if (Console.IsOutputRedirected) return "";
+
         Color c = HEXToColor(HEX);
         return $"\x1b[48;2;{c.r};{c.g};{c.b}m";
     }

@@ -10,10 +10,13 @@ public static partial class Markup
 {
     static Markup() => System.Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-    public static void Rich(string code, bool lastWrap = false)
+    public static void Rich(string code, bool lastWrap = false, OutType type = OutType.Out)
     {
-        Out.Inline("\x1b[23m");
-        Out.Inline("\x1b[22m");
+        if (!Console.IsOutputRedirected)
+        {
+            Out.Inline("\x1b[23m", type);
+            Out.Inline("\x1b[22m", type);
+        }
 
         MarkupToken[] tokens = Parse(code);
 
@@ -24,22 +27,26 @@ public static partial class Markup
         {
             switch (tokens[i].Type)
             {
-                case MarkupTokenType.Text or MarkupTokenType.Shield: Out.Inline(tokens[i].Token); break;
+                case MarkupTokenType.Text or MarkupTokenType.Shield: Out.Inline(tokens[i].Token, type); break;
                 case MarkupTokenType.Italic:
+                    if (Console.IsOutputRedirected) break;
                     italic = !italic;
-                    Out.Inline(italic ? "\x1b[3m" : "\x1b[23m");
+                    Out.Inline(italic ? "\x1b[3m" : "\x1b[23m", type);
                     break;
                 case MarkupTokenType.Bold:
+                    if (Console.IsOutputRedirected) break;
                     bold = !bold;
-                    Out.Inline(bold ? "\x1b[1m" : "\x1b[22m");
+                    Out.Inline(bold ? "\x1b[1m" : "\x1b[22m", type);
                     break;
                 case MarkupTokenType.Color:
+                    if (Console.IsOutputRedirected) break;
                     PrintColor(new Color(tokens[i].Token)); 
                     break;
                 case MarkupTokenType.AutoColor:
+                    if (Console.IsOutputRedirected) break;
                     if (!SetConsoleColor(tokens[i].Token)) {
                         Color c = ParseColor(tokens[i].Token);
-                        Out.Inline(Color.ColorToConsoleFg(c));
+                        Out.Inline(Color.ColorToConsoleFg(c), type);
                     } break;
             }
         }
@@ -47,7 +54,7 @@ public static partial class Markup
         if (lastWrap) Console.WriteLine();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PrintColor(Color c) => Out.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m");
+        void PrintColor(Color c) => Out.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m", type);
     }
 
     private static MarkupToken[] Parse(string markup)

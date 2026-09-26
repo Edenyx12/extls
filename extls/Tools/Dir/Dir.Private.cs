@@ -14,7 +14,7 @@ public partial class Dir
         {
             string indent = new string(' ', currentLevel * 2);
             string folderName = System.IO.Path.GetFileName(path);
-            string folderIcon = config.icons ? " " : "";
+            string folderIcon = config.icons && !Console.IsOutputRedirected ? " " : "";
 
             if (string.IsNullOrEmpty(folderName)) folderName = path;
 
@@ -134,6 +134,12 @@ public partial class Dir
         ReadOnlySpan<char> extSpan = dotIndex >= 0 
             ? fileName.AsSpan(dotIndex, end - dotIndex + 1) 
             : ReadOnlySpan<char>.Empty;
+
+        if (Console.IsOutputRedirected)
+        {
+            fileIcon = new FileIconPack("","");
+            return;
+        }
 
         fileIcon = extSpan switch
         {
