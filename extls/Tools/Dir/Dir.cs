@@ -18,6 +18,7 @@ public record DirConfig(bool icons, bool mini, string[] ignoreExtensions)
     }
 }
 
+
 [ModuleName("dir")]
 public partial class Dir : Module
 {
@@ -26,7 +27,7 @@ public partial class Dir : Module
     public Dir()
     {
         name = "dir";
-        version = "0.6.9b";
+        version = "0.6.10b";
 
         string path = Path.Combine(Global.RootPath, "config", "dir-config.json");
 
@@ -56,73 +57,73 @@ public partial class Dir : Module
         }
     }
 
-    [MethodName(["create", "c"])]
-    public void Create(string[] args)
+    [MethodName(
+        description: "Creates a file or folder with the specified name." +
+                     "\nUsage: <type: $[genesis]`folder`$[white] or $[octavus]`file`$[white]> " +
+                     "<name: with extension> " +
+                     "\\[ path: if missing, uses the current directory\\] ",
+        aliases: ["create", "c"]
+    )]
+    public void Create()
     {
-        if (args.Length == 0) { Out.Error("Arguments are missing."); return; }
+        string? createType = Arguments.GetRaw(0);
+        string? name = Arguments.GetRaw(1);
+        string? path = Arguments.GetPath();
 
-        int createType = args[0] switch { "file" => 1, "folder" => 0, _ => -1, };
-        if (createType == -1) { Out.Error("Invalid type for creation."); return; }
-        if (args.Length < 2) { Out.Error("Invalid name for creation."); }
-        string name = args[1];
-
-        bool auto = true;
-        string userPath = "";
-
-        for (int i = 0; i < args.Length; i++)
+        if (createType is not ("file" or "folder"))
         {
-            switch (args[i])
-            {
-                case "--set-path" or "-sp":
-                    if (i + 1 > args.Length) break;
-                    auto = false;
-                    userPath = args[i + 1];
-                    break;
-            }
+            Out.Error("Invalid type for creation.");
+            return;
+        }
+        if (name is null)
+        {
+            Out.Error("Invalid name for creation.");
+            return;
+        }
+        if (path is null)
+        {
+            path = Directory.GetCurrentDirectory();
         }
 
-        string path = auto ? Directory.GetCurrentDirectory() : userPath;
-        if (!Path.Exists(path)) { Out.Error("Unknown path."); return; }
-
-        bool success = true;
-        string failReason = "";
         try
         {
             string fullpath = Path.Combine(path, name);
             switch (createType)
             {
-                case 0:
+                case "folder":
                     Directory.CreateDirectory(fullpath);
                     break;
-                case 1:
-                    File.Create(fullpath);
+                case "file":
+                    using (File.Create(fullpath)){}
                     break;
 
                 default: throw new Exception();
             }
-        }
-        catch (Exception ex) { success = false; failReason = Reason(ex); }
 
-        if (success) Markup.Rich($"Item created **$[green]successfully[white]**!" +
-                                 $"\n$[white]Item name: $[cyan]{Markup.SafeBackslash(name)}" +
-                                 $"\n$[white]Path: $[yellow]{Markup.SafeBackslash(path)}");
-        else Markup.Rich($"Create item **$[red]failed$[white]** of reason: $[yellow]{failReason}$[yellow]." +
-                         $"\n$[white]Item name: **$[cyan]{Markup.SafeBackslash(name)}**" +
-                         $"\n$[white]Path: *$[yellow]{Markup.SafeBackslash(path)}*");
+            Markup.Rich($"Item created **$[green]successfully$[white]**." +
+                        $"\nItem name: $[octavus]{Markup.SafeBackslash(name)}$[white]" +
+                        $"\nPath: $[genesis]{Markup.SafeBackslash(path)}$[white]");
+        }
+        catch (Exception ex)
+        {
+            Markup.Rich($"Create item **$[red]failed$[white]** of reason: $[yellow]{Reason(ex)}$[white]." +
+                         $"\nItem name: **$[cyan]{Markup.SafeBackslash(name)}$[white]**" +
+                         $"\nPath: $[genesis]{Markup.SafeBackslash(path)}$[white]");
+        }
     }
 
-    [MethodName(["tree", "tr"])]
+    [MethodName(
+        description: "Displays a tree of folders and files.",
+        aliases: ["tree", "tr"]
+    )]
     public void Tree()
     {
         bool recursive = Arguments.Get("r", "recursive");
-
-        if (int.TryParse(Arguments.GetRight("r", "recursive"), out int recursiveLevels)){}
-        else recursiveLevels = recursive ? 999999 : 1;
-        
         bool summary = Arguments.Get("s", "sum", "summary");
         byte typeFilter = Arguments.GetRight("t", "type") switch {"file" => 2, "folder" => 1, _ or "all" => 0};
-
         string? path = Arguments.GetPath();
+        if (int.TryParse(Arguments.GetRight("r", "recursive"), out int recursiveLevels)){}
+        else recursiveLevels = recursive ? 999999 : 1;
 
         if (path is null)
         {
@@ -162,7 +163,10 @@ public partial class Dir : Module
         Console.WriteLine();
     }
 
-    [MethodName(["grid", "gr", "grd"])]
+    [MethodName(
+        description: "Displays folders and files arranged in a grid.",
+        aliases: ["grid", "gr", "grd"]
+    )]
     public void Grid()
     {
         string path = Directory.GetCurrentDirectory();
@@ -227,7 +231,10 @@ public partial class Dir : Module
     }
 
 
-    [MethodName("config")]
+    [MethodName(
+        description: "View the config.",
+        aliases: ["config"]
+    )]
     public void Config()
     {
         string path = Path.Combine(Global.RootPath, "config", "dir-config.json");

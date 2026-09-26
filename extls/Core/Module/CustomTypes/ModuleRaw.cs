@@ -12,7 +12,7 @@ public abstract class ModuleRaw : Module
             return true;
         }
 
-        if (arg is "help" or "-h" or "--help")
+        if (arg is "-h" or "--help")
         {
             Help();
             return true;
@@ -30,7 +30,7 @@ public abstract class ModuleRaw : Module
             return true;
         }
 
-        if (arg is "help" or "-h" or "--help")
+        if (arg is "-h" or "--help")
         {
             Help();
             return true;

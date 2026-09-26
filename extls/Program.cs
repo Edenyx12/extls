@@ -12,50 +12,35 @@ public class Program
 
         if (args.Length == 0)
         {
-            root.Label();
+            root.Dispatch(false);
             return;
         }
 
         Arguments.Initialize(args);
-        bool announce = root.Dispatch(true);
 
-        if (announce || Arguments.UsedGlobalArgs) return;
-
-        string? moduleName = null;
-
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (Markup.Match(args[i], 0, "--")) continue;
-            else if (Markup.Match(args[i], 0, "-")) continue;
-
-            moduleName = args[i].ToLower();
-            break;
-        }
+        string? moduleName = Arguments.firstRaw;
 
         if (moduleName is null)
         {
-            Utils.InvalidOperation();
+            root.Dispatch(false);
             return;
         }
 
-        List<string> cleanArgs = args.ToList();
-        cleanArgs.Remove(moduleName);
+        bool announce = false;
+        Module? module = Global.GetModule(moduleName);
 
-        Arguments.Initialize(cleanArgs.ToArray());
-
-        if (moduleName is "root")
-        {
-            root.Dispatch(true);
-            return;
-        }
-
-        var module = Global.GetModule(moduleName);
-        
         if (module != null)
         {
-            module.Dispatch(cleanArgs.Count > 0 ? cleanArgs[0] : "");
+            Arguments.RemoveArg(moduleName);
+
+            string arg = string.Empty;
+            if (Arguments.argv is not null && Arguments.argv.Count > 0) arg = Arguments.argv[0].str;
+
+            module.Dispatch(arg);
+
             return;
         }
+        else if (moduleName is "root") announce = root.Dispatch(true);
         
         if (!announce)
             Out.Warning($"Module not found: '{moduleName}'. Check modules with `extls root modules`.");

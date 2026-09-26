@@ -5,15 +5,15 @@ namespace extls.Core;
 
 public partial class Root
 {
-    private string label = new string($"  $[Octavus]extls$[white] $[darkgray]v{Global.Version}\n");
-    private string labelVersion = new string($"  $[Octavus]extls$[white] **$[platypus]v{Global.Version}**\n");
+    private string label = new string($"  $[Octavus]extls$[white] $[darkgray]{Global.Version}\n");
+    private string labelVersion = new string($"  $[Octavus]extls$[white] **$[platypus]{Global.Version}**\n");
     private string help = new string(
         "  Help:\n" +
-        "  * $[mint]`version`$[white], $[mint]`--version`$[white], $[mint]`-v`$[white] - colorize the version in the label.\n" +
-        "  * $[mint]`help`$[white]   , $[mint]`--help`$[white]   , $[mint]`-h`$[white] - show this help.\n" +
-        "  * $[mint]`modules`$[white], $[mint]`--modules`$[white], $[mint]`-m`$[white] - show a list of modules.\n" +
-        "  * $[mint]`where`$[white]  , $[mint]`--where`$[white]  , $[mint]`-w`$[white] - add the bin path to the label.\n\n" +
-        "  * $[festive]`--clear-cache`$[white] - clear the reflection module cache\n"
+        "  • $[mint]`version`$[white], $[mint]`--version`$[white], $[mint]`-v`$[white] - colorize the version in the label.\n" +
+        "  • $[mint]`help`$[white]   , $[mint]`--help`$[white]   , $[mint]`-h`$[white] - show this help.\n" +
+        "  • $[mint]`modules`$[white], $[mint]`--modules`$[white], $[mint]`-m`$[white] - show a list of modules.\n" +
+        "  • $[mint]`where`$[white]  , $[mint]`--where`$[white]  , $[mint]`-w`$[white] - add the bin path to the label.\n\n" +
+        "  • $[festive]`--clear-cache`$[white] - clear the reflection module cache\n"
     );
     private string usage = new string(
         $"  $[navy]usage: **extls <MODULE> <MODULE-ARGS> <ARGS>**$[white]" +
@@ -22,7 +22,7 @@ public partial class Root
 
     public bool Dispatch(bool silent)
     {
-        bool announce = false;
+        bool announce = Arguments.UsedGlobalArgs;
         bool label = false;
 
         if (Arguments.GetForce("v", "version"))
@@ -31,7 +31,11 @@ public partial class Root
             label = true;
             announce = true;
         }
-        else if (!silent) Label();
+        else if (!silent)
+        {
+            Label();
+            label = true;
+        }
 
         if (Arguments.GetForce("w", "where"))
         {

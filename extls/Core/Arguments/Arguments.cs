@@ -6,21 +6,26 @@ namespace extls.Core;
 public static class Arguments
 {
     public static bool UsedGlobalArgs = false;
-    public static Arg[]? argv;
-    public static Arg[]? arglong;
-    public static Arg[]? argshorts;
-    public static Arg[]? argraw;
+    public static string? firstRaw;
+    public static List<Arg>? argv;
+    public static List<Arg>? arglong;
+    public static List<Arg>? argshorts;
+    public static List<Arg>? argraw;
+
+    private static HashSet<string> globalArgs = new();
 
     public static void Initialize(string[]? args)
     {
         if (args is null) return;
         if (args.Length == 0) return;
+
+        firstRaw = null;
         argv = null;
         arglong = null;
         argshorts = null;
         argraw = null;
 
-        string[] clean = ParseGlobal(args);
+        List<string> clean = ParseGlobal(args);
         Parse(clean);
     }
 
@@ -196,7 +201,34 @@ public static class Arguments
         return true;
     }
 
-    private static string[] ParseGlobal(string[] args)
+    public static void RemoveArg(string arg)
+    {
+        if (argv is null) return;
+        RemoveItem(argv, arg);
+
+        if (arglong is null) return;
+        RemoveItem(arglong, arg);
+
+        if (argshorts is null) return;
+        RemoveItem(argshorts, arg);
+
+        if (argraw is null) return;
+        RemoveItem(argraw, arg);
+
+        void RemoveItem(List<Arg> list, string str)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].str == str)
+                {
+                    list.Remove(list[i]);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static List<string> ParseGlobal(string[] args)
     {
         List<string> clean = new();
 
@@ -208,11 +240,11 @@ public static class Arguments
 
             switch (args[arg])
             {
-                case "--verbose":
+                case "--verbose":     if (!globalArgs.Add(args[arg])) break;
                     triggered = true;
                     Global.Verbose = true;
                     break;
-                case "--clear-cache":
+                case "--clear-cache": if (!globalArgs.Add(args[arg])) break;
                     triggered = true;
                     if (File.Exists(Path.Combine(Global.RootPath, "modules.json")))
                         File.Delete(Path.Combine(Global.RootPath, "modules.json"));
@@ -232,17 +264,17 @@ public static class Arguments
 
         if (count > 0) Console.WriteLine();
 
-        return clean.ToArray();
+        return clean;
     }
 
-    private static void Parse(string[] args)
+    private static void Parse(List<string> args)
     {
         List<Arg> argv      = new();
         List<Arg> arglong   = new();
         List<Arg> argshorts = new();
         List<Arg> argraw    = new();
 
-        for (int arg = 0; arg < args.Length; arg++)
+        for (int arg = 0; arg < args.Count; arg++)
         {
             if (Markup.Match(args[arg], 0, "--"))
             {
@@ -266,9 +298,11 @@ public static class Arguments
             argraw.Add(argr);
         }
 
-        Arguments.argv      = argv.ToArray();
-        Arguments.arglong   = arglong.ToArray();;
-        Arguments.argshorts = argshorts.ToArray();;
-        Arguments.argraw    = argraw.ToArray();;
+        Arguments.argv      = argv;
+        Arguments.arglong   = arglong;
+        Arguments.argshorts = argshorts;
+        Arguments.argraw    = argraw;
+
+        if (argraw.Count > 0) firstRaw = argraw[0].str;
     }
 }

@@ -3,11 +3,16 @@ namespace extls.Core;
 public struct MethodMeta
 {
     public string MethodName { get; set; }
+    public string Description { get; set; }
     public string[] Aliases { get; set; }
 
-    public MethodMeta(string methodName, string[] aliases)
+    public MethodMeta(
+        string methodName,
+        string description,
+        string[] aliases)
     {
         this.MethodName = methodName;
+        this.Description = description;
         this.Aliases = aliases;
     }
 }

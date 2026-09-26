@@ -1,3 +1,4 @@
+using extls.Core.Decoration;
 using System.Reflection;
 
 namespace extls.Core;
@@ -68,6 +69,7 @@ public static partial class Global
 
                 methods.Add(new MethodMeta(
                     method.Name,
+                    methodAttribute.Description,
                     methodAttribute.Aliases)
                 );
             }
@@ -144,15 +146,21 @@ public static partial class Global
 
         try
         {
+            Arguments.RemoveArg(method);
             module.GetType()
               .GetMethod(meta.Methods[methodIndex].MethodName)?
               .Invoke(module, null);
         }
         catch
         {
+            string white = Color.ColorToConsoleFg(new Color(0xff,0xff,0xff));
+            string error = Color.ColorToConsoleFg(Color.Nona);
+
             throw new Exception(
-                $"Arguments detected in the signature of method `{meta.Methods[methodIndex].MethodName}`. " +
-                "The method cannot have arguments when called automatically.");
+                $"{error}Arguments detected in the signature of method " +
+                $"`{white}{meta.Methods[methodIndex].MethodName}{error}`. " +
+                $"The method cannot have arguments when called automatically.{white}"
+            );
         }
         
         return true;
