@@ -10,9 +10,14 @@ public enum Platform
 
 public static partial class Global
 {
-    public static Assembly Assembly = Assembly.GetExecutingAssembly();
+    public static Assembly Asm = Assembly.GetExecutingAssembly();
     public static Platform Platform = Platform.Windows;
-    public static string Version = "0.5.21-beta";
+    public static readonly string Version =
+        Asm
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion
+            .Split('+')[0]
+        ?? "unknown";
     public static bool Verbose = false;
     public static readonly string RootPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),

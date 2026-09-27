@@ -27,7 +27,7 @@ public partial class Dir : Module
     public Dir()
     {
         name = "dir";
-        version = "0.6.11b";
+        version = "0.6.12b";
 
         string path = Path.Combine(Global.RootPath, "config", "dir-config.json");
 
@@ -114,23 +114,21 @@ public partial class Dir : Module
 
     [MethodName(
         description: "Displays a tree of folders and files.",
-        aliases: ["tree", "tr", "ls"]
+        aliases: ["tree", "tr"]
     )]
     public void Tree()
     {
         bool recursive = Arguments.Get("r", "recursive");
         bool summary = Arguments.Get("s", "sum", "summary");
-        byte typeFilter = Arguments.GetRight("t", "type") switch {"file" => 2, "folder" => 1, _ or "all" => 0};
+        byte typeFilter = (byte)Arguments.GetRightSwitch(["t", "type"], ["all", "folder", "file"], @default: 0);
         string? path = Arguments.GetPath();
-        if (int.TryParse(Arguments.GetRight("r", "recursive"), out int recursiveLevels)){}
-        else recursiveLevels = recursive ? 999999 : 1;
+        int recursiveLevels = recursive ? Arguments.GetRightInt(["r", "recursive"], @default: 999999) : 1;
 
         if (path is null) path = Directory.GetCurrentDirectory();
 
         if (!config!.mini)
-            Markup.Rich($"Scan result of path $[{
-                (Global.Platform is Platform.Windows ? "yellow" : "#7dbeff")
-            }]'{Markup.SafeBackslash(path)}'$[white]:\n", true, OutType.Err);
+            Markup.Rich($"Scan result of path $[{(Global.Platform is Platform.Windows ? "yellow" : "#7dbeff")}]" +
+                        "'{Markup.SafeBackslash(path)}'$[white]:\n", true, OutType.Err);
         else Out.Line("", OutType.Err);
 
         Stopwatch time = Stopwatch.StartNew();

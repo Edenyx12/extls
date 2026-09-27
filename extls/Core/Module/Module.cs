@@ -30,7 +30,7 @@ public abstract class Module
             methods += GetMethodItem(method);
         }
 
-        Markup.Rich(methods, true);
+        Markup.Rich(methods);
     }
 
     public virtual void Help()
@@ -64,18 +64,6 @@ public abstract class Module
                 if (method.Description[i] is '\n')
                 {
                     desc += "\n    ";
-                    i++;
-
-                    for (int j = i; j < method.Description.Length; j++)
-                    {
-                        if (method.Description[j] is not ' ')
-                        {
-                            i--;
-                            break;
-                        }
-                        i++;
-                    }
-
                     continue;
                 }
 
@@ -85,7 +73,7 @@ public abstract class Module
             help += desc + "\n\n";
         }
 
-        Markup.Rich(help, true);
+        Markup.Rich(help);
     }
     public virtual void Version()
         => Markup.Rich($"\nModule '**$[catppuccin]{name}$[white]**': **$[sextus]{version}$[white]** version.");

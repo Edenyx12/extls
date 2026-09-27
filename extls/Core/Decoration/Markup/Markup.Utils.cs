@@ -36,4 +36,9 @@ public static partial class Markup
         ReadOnlySpan<char> slice = str.AsSpan(index, target.Length);
         return slice.SequenceEqual(target);
     }
+
+    public static string Slice(string str, int start, int stop)
+        => str.AsSpan(start, stop - start).ToString();
+    public static Span<char> Slice(Span<char> str, int start, int stop)
+        => str.Slice(start, stop - start);
 }

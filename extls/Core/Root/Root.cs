@@ -9,10 +9,10 @@ public partial class Root
     private string labelVersion = new string($"  $[Octavus]extls$[white] **$[platypus]{Global.Version}**\n");
     private string help = new string(
         "  Help:\n" +
-        "  • $[mint]`version`$[white], $[mint]`--version`$[white], $[mint]`-v`$[white] - colorize the version in the label.\n" +
-        "  • $[mint]`help`$[white]   , $[mint]`--help`$[white]   , $[mint]`-h`$[white] - show this help.\n" +
-        "  • $[mint]`modules`$[white], $[mint]`--modules`$[white], $[mint]`-m`$[white] - show a list of modules.\n" +
-        "  • $[mint]`where`$[white]  , $[mint]`--where`$[white]  , $[mint]`-w`$[white] - add the bin path to the label.\n\n" +
+        "  • $[mint]`--version`$[white], $[mint]`-v`$[white] - colorize the version in the label.\n" +
+        "  • $[mint]`--help`$[white]   , $[mint]`-h`$[white] - show this help.\n" +
+        "  • $[mint]`--modules`$[white], $[mint]`-m`$[white] - show a list of modules.\n" +
+        "  • $[mint]`--where`$[white]  , $[mint]`-w`$[white] - add the bin path to the label.\n\n" +
         "  • $[festive]`--clear-cache`$[white] - clear the reflection module cache\n"
     );
     private string usage = new string(
@@ -49,19 +49,17 @@ public partial class Root
             announce = true;
         }
 
-        if (!silent || announce)
-            Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
-
         if (Arguments.GetForce("h", "help"))
         {
             if (!label)
             {
+                Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
                 Label();
                 label = true;
             }
 
-            Help();
             Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
+            Help();
             announce = true;
         }
 
@@ -69,12 +67,16 @@ public partial class Root
         {
             if (!label) Label();
 
-            Modules();
             Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
+            Modules();
             announce = true;
         }
 
-        if (!silent || announce) Markup.Rich(usage);
+        if (!silent && !announce)
+        {
+            Markup.Line(new Gradient(Color.Lighter(Color.Octavus, 0.25f), Color.Darker(Color.Octavus, 0.67f)), preferred: 50);
+            Markup.Rich(usage);
+        }
 
         return announce;
     }

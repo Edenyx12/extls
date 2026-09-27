@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace extls.Core.Decoration;
 
 public readonly struct Gradient
@@ -24,16 +26,17 @@ public readonly struct Gradient
 
     public string PaintString(string str)
     {
-        string painted = string.Empty;
+        StringBuilder painted = new(str.Length * 20);
 
         for (int i = 0; i < str.Length; i++)
         {
             float t = i / (float)(str.Length - 1);
             Color color = Pos(t);
 
-            painted += Color.ColorToConsoleFg(color) + str[i];
+            painted.Append(Color.ColorToConsoleFg(color));
+            painted.Append(str[i]);
         }
 
-        return painted;
+        return painted.ToString();
     }
 }

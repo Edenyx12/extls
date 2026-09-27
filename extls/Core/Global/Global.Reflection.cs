@@ -42,7 +42,7 @@ public static partial class Global
     {
         var result = new Dictionary<string[], ModuleMeta>();
 
-        foreach (Type type in Assembly.GetTypes())
+        foreach (Type type in Asm.GetTypes())
         {
             if (!type.IsClass ||
                 type.IsAbstract ||
@@ -118,7 +118,7 @@ public static partial class Global
         }
         if (moduleName == string.Empty) return null!;
         
-        var module = Assembly.GetType(moduleName);
+        var module = Asm.GetType(moduleName);
         
         if (module is null) return null!;
         return Activator.CreateInstance(module) as Module;

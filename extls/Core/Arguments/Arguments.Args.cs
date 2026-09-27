@@ -1,7 +1,5 @@
 namespace extls.Core;
 
-public enum ArgType{Shorts, Long, Raw}
-
 public class Arg
 {
     public ArgType type = ArgType.Raw;

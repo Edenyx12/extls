@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using extls.Core.Decoration;
 
@@ -13,6 +14,7 @@ public static class Arguments
     public static List<Arg>? argraw;
 
     private static HashSet<string> globalArgs = new();
+    private static HashSet<string> addedArgs = new();
 
     public static void Initialize(string[]? args)
     {
@@ -24,12 +26,13 @@ public static class Arguments
         arglong = null;
         argshorts = null;
         argraw = null;
+        addedArgs.Clear();
 
         List<string> clean = ParseGlobal(args);
         Parse(clean);
     }
 
-    public static bool Get(params string[] args)
+    public static bool Get(params ReadOnlySpan<string> args)
     {
         if (argv is null) return false;
 
@@ -51,7 +54,7 @@ public static class Arguments
         return false;
     }
     
-    public static bool GetForce(params string[] args)
+    public static bool GetForce(params ReadOnlySpan<string> args)
     {
         if (argv is null) return false;
 
@@ -72,7 +75,7 @@ public static class Arguments
         return false;
     }
 
-    public static string? GetRight(params string[] args)
+    public static string? GetRight(params ReadOnlySpan<string> args)
     {
         if (argv is null) return null;
         if (argraw is null) return null;
@@ -89,20 +92,52 @@ public static class Arguments
         return null;
     }
 
-    public static int GetIndex(params string[] args)
+    public static int GetRightInt(ReadOnlySpan<string> args, int @default = -1)
+    {
+        string? right = GetRight(args);
+        if (right is null) return @default;
+
+        if (int.TryParse(right, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)) return value;
+        else return @default;
+    }
+
+    public static float GetRightFloat(ReadOnlySpan<string> args, float @default = -1f)
+    {
+        string? right = GetRight(args);
+        if (right is null) return @default;
+
+        if (float.TryParse(right, NumberStyles.Float, CultureInfo.InvariantCulture, out float value)) return value;
+        else return @default;
+    }
+
+    public static int GetRightSwitch(ReadOnlySpan<string> args, ReadOnlySpan<string> items, int @default = -1)
+    {
+        string? right = GetRight(args);
+        if (right is null) return @default;
+
+        for (int i = 0; i < items.Length; i++)
+            if (right == items[i]) return i;
+
+        return @default;
+    }
+
+    public static int GetIndex(params ReadOnlySpan<string> args)
     {
         if (argv is null) return -1;
 
         for (int i = 0; i < args.Length; i++)
         {
             if (args[i].Length == 1)
+            {
                 foreach (Arg arg1 in argv)
                     if (arg1.Contains(args[i][0])) return arg1.index;
-            else 
+            }
+            else
+            {
                 foreach (Arg arg2 in argv)
-                    if (arg2.Contains(args[i])) return arg2.index;
+                    if (arg2.Contains(args[i]))return arg2.index;
+            }
         }
-
         return -1;
     }
 
@@ -121,24 +156,20 @@ public static class Arguments
         return null;
     }
 
-    public static string? GetPath()
+    public static string? GetPath(PathType type = PathType.Both)
     {
         if (argraw is null) return null;
 
-        string? path = null;
-
         foreach (Arg arg in argraw)
         {
-            path = ParsePath(arg.str);
-            if (path is null) continue;
-
-            return path;
+            string? path = ParsePath(arg.str, type);
+            if (path is not null) return path;
         }
 
         return null;
     }
 
-    public static string[]? GetPaths()
+    public static string[]? GetPaths(PathType type = PathType.Both)
     {
         if (argraw is null) return null;
 
@@ -146,35 +177,17 @@ public static class Arguments
 
         foreach (Arg arg in argraw)
         {
-            string? path = ParsePath(arg.str);
-            if (path is null) continue;
-
-            paths.Add(path);
+            string? path = ParsePath(arg.str, type);
+            if (path is not null) paths.Add(path);
         }
 
-        if (paths.Count > 0) return paths.ToArray();
-        else return null;
+        return paths.Count > 0 ? paths.ToArray() : null;
     }
 
-    public static string? ParsePath(string? path)
-    {
-        if (path is null || path.Length is 0) return null;
+    public static string? ParsePath(string? path, PathType type = PathType.Both)
+        => ParsePath(path, out string? parsed, type) ? parsed : null;
 
-        string? parsed = path[0] switch {
-            '.' => path.Length > 2
-                ? Path.Combine(Directory.GetCurrentDirectory(), new string(path?[2..]))
-                : Directory.GetCurrentDirectory(),
-            '~' => path.Length > 2
-                ? Path.Combine(Global.HomePath, new string(path?[2..]))
-                : Global.HomePath,
-            _ => path
-        };
-
-        if (!Directory.Exists(parsed)) parsed = null;
-        return parsed;
-    }
-
-    public static bool ParsePath(string? path, out string? parsed)
+    public static bool ParsePath(string? path, out string? parsed, PathType type = PathType.Both)
     {
         if (path is null || path.Length is 0)
         {
@@ -182,20 +195,68 @@ public static class Arguments
             return false;
         }
 
-        parsed = path[0] switch {
-            '.' => path.Length > 2
-                ? Path.Combine(Directory.GetCurrentDirectory(), new string(path?[2..]))
-                : Directory.GetCurrentDirectory(),
-            '~' => path.Length > 2
-                ? Path.Combine(Global.HomePath, new string(path?[2..]))
-                : Global.HomePath,
-            _ => path
-        };
-
-        if (!Directory.Exists(parsed))
+        switch (path![0])
         {
-            parsed = null;
-            return false;
+            case '.':
+                if (Markup.Match(path, 0, "./") || Markup.Match(path, 0, @".\"))
+                {
+                    var slice = Markup.Slice(path, 2, path.Length);
+                    parsed = Path.Combine(Directory.GetCurrentDirectory(), slice);
+                }
+                else if (Markup.Match(path, 0, "..")) parsed = Path.GetFullPath(path, Directory.GetCurrentDirectory());
+                else
+                {
+                    if (path.Length is 1)
+                        parsed = Directory.GetCurrentDirectory(); // ex: . (current)
+                    else if (path.Length > 1)
+                        parsed = Path.Combine(Directory.GetCurrentDirectory(), Markup.Slice(path, 1, path.Length)); // ex: .config from ~
+                    else parsed = path;
+                }
+                break;
+            case '~':
+                if (Markup.Match(path, 0, "~/") || Markup.Match(path, 0, @"~\"))
+                {
+                    var slice = Markup.Slice(path, 2, path.Length);
+                    parsed = Path.Combine(Global.HomePath, slice);
+                }
+                else
+                {
+                    if (path.Length is 1)
+                        parsed = Global.HomePath;
+                    else if (path.Length > 1)
+                        parsed = Path.Combine(Global.RootPath, Markup.Slice(path, 1, path.Length));
+                    else parsed = path;
+                }
+                break;
+            default:
+                parsed = path;
+                break;
+        }
+
+        switch (type)
+        {
+            case PathType.File:
+                if (!File.Exists(parsed))
+                {
+                    parsed = null;
+                    return false;
+                }
+                break;
+            case PathType.Folder:
+                if (!Directory.Exists(parsed))
+                {
+                    parsed = null;
+                    return false;
+                }
+                break;
+            case PathType.Both:
+                if (Directory.Exists(parsed))return true;
+                else if (File.Exists(parsed)) return true;
+                else
+                {
+                    parsed = null;
+                    return false;
+                }
         }
 
         return true;
@@ -206,14 +267,9 @@ public static class Arguments
         if (argv is null) return;
         RemoveItem(argv, arg);
 
-        if (arglong is null) return;
-        RemoveItem(arglong, arg);
-
-        if (argshorts is null) return;
-        RemoveItem(argshorts, arg);
-
-        if (argraw is null) return;
-        RemoveItem(argraw, arg);
+        if (arglong is not null)   RemoveItem(arglong, arg);
+        if (argshorts is not null) RemoveItem(argshorts, arg);
+        if (argraw is not null)    RemoveItem(argraw, arg);
 
         void RemoveItem(List<Arg> list, string str)
         {
@@ -228,7 +284,7 @@ public static class Arguments
         }
     }
 
-    private static List<string> ParseGlobal(string[] args)
+    private static List<string> ParseGlobal(ReadOnlySpan<string> args)
     {
         List<string> clean = new();
 
@@ -255,9 +311,11 @@ public static class Arguments
                     break;
             }
 
-            UsedGlobalArgs = triggered;
-
-            if (triggered) continue;
+            if (triggered)
+            {
+                UsedGlobalArgs = true;
+                continue;
+            }
 
             clean.Add(args[arg]);
         }
@@ -279,6 +337,7 @@ public static class Arguments
             if (Markup.Match(args[arg], 0, "--"))
             {
                 string slice = args[arg].Substring(2).ToLower();
+                if (!addedArgs.Add(slice)) continue;
                 var argl = new Arg(slice, arg, ArgType.Long);
                 argv.Add(argl);
                 arglong.Add(argl);
@@ -287,12 +346,14 @@ public static class Arguments
             else if (Markup.Match(args[arg], 0, "-"))
             {
                 string slice = args[arg].Substring(1).ToLower();
+                if (!addedArgs.Add(slice)) continue;
                 var argsh = new Arg(slice, arg, ArgType.Shorts);
                 argv.Add(argsh);
                 argshorts.Add(argsh);
                 continue;
             }
 
+            if (!addedArgs.Add(args[arg])) continue;
             var argr = new Arg(args[arg], arg, ArgType.Raw);
             argv.Add(argr);
             argraw.Add(argr);

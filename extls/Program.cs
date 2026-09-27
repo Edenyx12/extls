@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using extls.Core;
+﻿using extls.Core;
 using extls.Core.Decoration;
 
 namespace extls;
@@ -26,7 +25,6 @@ public class Program
             return;
         }
 
-        bool announce = false;
         Module? module = Global.GetModule(moduleName);
 
         if (module != null)
@@ -40,9 +38,15 @@ public class Program
 
             return;
         }
-        else if (moduleName is "root") announce = root.Dispatch(true);
+        else if (moduleName is "root")
+        {
+            bool announce = root.Dispatch(true);
+            if (!announce)
+                Out.Warning($"Root: There are no arguments.");
+
+            return;
+        }
         
-        if (!announce)
-            Out.Warning($"Module not found: '{moduleName}'. Check modules with `extls root modules`.");
+        Out.Warning($"Module not found: '{moduleName}'. Check modules with `extls root modules`.");
     }
 }
