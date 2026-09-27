@@ -151,16 +151,20 @@ public static partial class Global
               .GetMethod(meta.Methods[methodIndex].MethodName)?
               .Invoke(module, null);
         }
-        catch
+        catch (Exception ex)
         {
-            string white = Color.ColorToConsoleFg(new Color(0xff,0xff,0xff));
-            string error = Color.ColorToConsoleFg(Color.Nona);
+            if (ex is TargetParameterCountException)
+            {
+                string white = Color.ColorToConsoleFg(new Color(0xff,0xff,0xff));
+                string error = Color.ColorToConsoleFg(Color.Nona);
 
-            throw new Exception(
-                $"{error}Arguments detected in the signature of method " +
-                $"`{white}{meta.Methods[methodIndex].MethodName}{error}`. " +
-                $"The method cannot have arguments when called automatically.{white}"
-            );
+                throw new Exception(
+                    $"{error}Arguments detected in the signature of method " +
+                    $"`{white}{meta.Methods[methodIndex].MethodName}{error}`. " +
+                    $"The method cannot have arguments when called automatically.{white}"
+                );
+            }
+            else Out.Line($"{ex.Message}\n{ex.InnerException}");
         }
         
         return true;

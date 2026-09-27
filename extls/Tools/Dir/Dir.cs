@@ -27,7 +27,7 @@ public partial class Dir : Module
     public Dir()
     {
         name = "dir";
-        version = "0.6.12b";
+        version = "0.6.13b";
 
         string path = Path.Combine(Global.RootPath, "config", "dir-config.json");
 
@@ -61,7 +61,7 @@ public partial class Dir : Module
         description: "Creates a file or folder with the specified name." +
                      "\nUsage: <type: $[genesis]`folder`$[white] or $[octavus]`file`$[white]> " +
                      "<name: with extension> " +
-                     "\\[ path: if missing, uses the current directory\\] ",
+                     "\\[path: if missing, uses the current directory\\]",
         aliases: ["create", "c", "mk"]
     )]
     public void Create()

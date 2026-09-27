@@ -124,9 +124,11 @@ public static partial class Markup
 
             if (type is MarkupTokenType.Shield)
             {
-                index++;
-                raw.Append(markup[index]);
-                index++;
+                if (index + 1 < markup.Length)
+                {
+                    index++;
+                    raw.Append(markup[index]);
+                }
             }
             else
             {

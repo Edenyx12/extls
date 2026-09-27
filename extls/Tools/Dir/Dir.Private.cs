@@ -15,6 +15,7 @@ public partial class Dir
             string indent = new string(' ', currentLevel * 2);
             string folderName = System.IO.Path.GetFileName(path);
             string folderIcon = config.icons && !Console.IsOutputRedirected ? " " : "";
+            string backslash = currentLevel == 0 ? "" : @"\\";
 
             if (string.IsNullOrEmpty(folderName)) folderName = path;
 
@@ -28,7 +29,8 @@ public partial class Dir
             };
 
             if (Global.Platform is Platform.Windows)
-                Markup.Rich($"{indent}$[yellow]{folderIcon}{folderName}\\\\ {statusTag}", true);
+                //Markup.Rich($"{indent}$[yellow]{folderIcon}{folderName}\\\\ {statusTag}", true);
+                Markup.Rich($"{indent}$[yellow]{folderIcon}{Markup.SafeBackslash(folderName)}{backslash}{statusTag}", true);
             else
             {
                 if (folderName is "/")
