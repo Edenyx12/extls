@@ -98,13 +98,13 @@ public abstract class Module
             return true;
         }
 
-        if (arg is "-v" or "--version")
+        if (arg is "v" or "version")
         {
             Version();
             return true;
         }
 
-        if (arg is "-h" or "--help")
+        if (arg is "h" or "help")
         {
             Help();
             return true;
