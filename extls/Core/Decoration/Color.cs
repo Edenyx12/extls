@@ -30,8 +30,14 @@ public readonly struct Color
         this.g = g;
         this.b = b;
     }
-
     public Color(string hex)
+    {
+        Color color = HEXToColor(hex);
+        this.r = color.r;
+        this.g = color.g;
+        this.b = color.b;
+    }
+    public Color(ReadOnlySpan<char> hex)
     {
         Color color = HEXToColor(hex);
         this.r = color.r;
@@ -57,6 +63,11 @@ public readonly struct Color
 
         return new Color((byte)r, (byte)g, (byte)b);
     }
+    public static Color HEXToColorSafe(ReadOnlySpan<char> HEX)
+    {
+        try { return HEXToColor(HEX); }
+        catch { return new Color(0xff,0xff,0xff); }
+    }
 
     public static byte HEXCharToInt(char c)
     {
@@ -78,7 +89,7 @@ public readonly struct Color
     {
         if (Console.IsOutputRedirected) return "";
 
-        Color c = HEXToColor(HEX);
+        Color c = HEXToColorSafe(HEX);
         return $"\x1b[38;2;{c.r};{c.g};{c.b}m";
     }
     public static string ColorToConsoleBg(Color c)
@@ -90,7 +101,7 @@ public readonly struct Color
     {
         if (Console.IsOutputRedirected) return "";
 
-        Color c = HEXToColor(HEX);
+        Color c = HEXToColorSafe(HEX);
         return $"\x1b[48;2;{c.r};{c.g};{c.b}m";
     }
 

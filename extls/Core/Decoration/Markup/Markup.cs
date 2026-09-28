@@ -3,61 +3,101 @@ using System.Runtime.CompilerServices;
 
 namespace extls.Core.Decoration;
 
-public enum MarkupTokenType {Text, Shield, Color, AutoColor, Bold, Italic}
+public enum MarkupTokenType {Text, Shield, Color, AutoColor, Bold, Italic, GradientStart, GradientEnd}
 public readonly record struct MarkupToken(string Token, MarkupTokenType Type);
 
 public static partial class Markup
 {
+    public static string boldOpen = "\x1b[1m";
+    public static string boldClose = "\x1b[22m";
+    public static string italicOpen = "\x1b[3m";
+    public static string italicClose = "\x1b[23m";
+
+    private static StringBuilder richBuilder = new();
+    private static StringBuilder gradientBuilder = new();
+    private static Gradient gradient;
+
     static Markup() => System.Console.OutputEncoding = System.Text.Encoding.UTF8;
 
     public static void Rich(string code, bool lastWrap = false, OutType type = OutType.Out)
     {
-        if (!Console.IsOutputRedirected)
-        {
-            Out.Inline("\x1b[23m", type);
-            Out.Inline("\x1b[22m", type);
-        }
+        richBuilder.Clear();
+        gradientBuilder.Clear();
 
         MarkupToken[] tokens = Parse(code);
 
         bool bold = false;
         bool italic = false;
+        bool gradient = false;
 
         for (int i = 0; i < tokens.Length; i++)
         {
             switch (tokens[i].Type)
             {
-                case MarkupTokenType.Text or MarkupTokenType.Shield: Out.Inline(tokens[i].Token, type); break;
+                case MarkupTokenType.Text or MarkupTokenType.Shield: 
+                    if (gradient) gradientBuilder.Append(tokens[i].Token);
+                    else          richBuilder.Append(tokens[i].Token);
+                    break;
                 case MarkupTokenType.Italic:
                     if (Console.IsOutputRedirected) break;
+
                     italic = !italic;
-                    Out.Inline(italic ? "\x1b[3m" : "\x1b[23m", type);
+
+                    if (gradient) gradientBuilder.Append(italic ? italicOpen : italicClose);
+                    else          richBuilder.Append(italic ? italicOpen : italicClose);
                     break;
                 case MarkupTokenType.Bold:
                     if (Console.IsOutputRedirected) break;
+
                     bold = !bold;
-                    Out.Inline(bold ? "\x1b[1m" : "\x1b[22m", type);
+
+                    if (gradient) gradientBuilder.Append(bold ? boldOpen : boldClose);
+                    else          richBuilder.Append(bold ? boldOpen : boldClose);
                     break;
                 case MarkupTokenType.Color:
                     if (Console.IsOutputRedirected) break;
-                    PrintColor(new Color(tokens[i].Token)); 
+
+                    if (gradient)
+                    {
+                        PaintGradientBuilder();
+                        gradient = false;
+                    }
+
+                    richBuilder.Append(Color.ColorToConsoleFg(tokens[i].Token));
                     break;
                 case MarkupTokenType.AutoColor:
                     if (Console.IsOutputRedirected) break;
-                    if (!SetConsoleColor(tokens[i].Token)) {
-                        Color c = ParseColor(tokens[i].Token);
-                        Out.Inline(Color.ColorToConsoleFg(c), type);
-                    } break;
+
+                    if (gradient)
+                    {
+                        PaintGradientBuilder();
+                        gradient = false;
+                    }
+
+                    richBuilder.Append(Color.ColorToConsoleFg(ParseColor(tokens[i].Token)));
+                    break;
+                case MarkupTokenType.GradientStart:
+                    gradient = true;
+                    Markup.gradient = GetGradient(tokens[i].Token);
+                    break;
+                case MarkupTokenType.GradientEnd:
+                    gradient = false;
+                    PaintGradientBuilder();
+                    break;
             }
         }
 
-        if (lastWrap) Console.WriteLine();
+        if (gradient) PaintGradientBuilder();
+        if (bold) richBuilder.Append(boldClose);
+        if (italic) richBuilder.Append(italicClose);
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PrintColor(Color c) => Out.Inline($"\x1b[38;2;{c.r};{c.g};{c.b}m", type);
+        richBuilder.Append(Color.ColorToConsoleFg(new Color(0xff,0xff,0xff)));
+
+        Out.Inline(richBuilder.ToString(), type);
+        if (lastWrap) Console.WriteLine();
     }
 
-    private static MarkupToken[] Parse(string markup)
+    private static MarkupToken[] Parse(ReadOnlySpan<char> markup)
     {
         var tokens = new List<MarkupToken>();
         var raw = new StringBuilder();
@@ -67,17 +107,17 @@ public static partial class Markup
 
             if (Match(markup, i, @"\"))
             {
-                AppendAndSave(ref i, 1, MarkupTokenType.Shield);
+                AppendAndSave(ref i, 1, MarkupTokenType.Shield, ref markup);
                 continue;
             }
             else if (Match(markup, i, "**"))
             {
-                AppendAndSave(ref i, 1, MarkupTokenType.Bold);
+                AppendAndSave(ref i, 1, MarkupTokenType.Bold, ref markup);
                 continue;
             }
             else if (Match(markup, i, "*"))
             {
-                AppendAndSave(ref i, 0, MarkupTokenType.Italic);
+                AppendAndSave(ref i, 0, MarkupTokenType.Italic, ref markup);
                 continue;
             }
             else if (Match(markup, i, "$"))
@@ -88,17 +128,27 @@ public static partial class Markup
                 {
                     i++;
 
-                    var c = new StringBuilder();
-
                     if (Match(markup, i, "#"))
                     {
                         i++;
-                        AppendAndSave(ref i, 6, MarkupTokenType.Color);
+                        AppendAndSave(ref i, 6, MarkupTokenType.Color, ref markup);
                         continue;
                     }
 
                     int len = FindStopToken(markup, i, "]");
-                    AppendAndSave(ref i, len, MarkupTokenType.AutoColor);
+                    AppendAndSave(ref i, len, MarkupTokenType.AutoColor, ref markup);
+                }
+                else if (Match(markup, i, "g"))
+                {
+                    i++;
+
+                    if (Match(markup, i, "["))
+                    {
+                        i++;
+                        int len = FindStopToken(markup, i, "]");
+                        AppendAndSave(ref i, len, MarkupTokenType.GradientStart, ref markup);
+                    }
+                    else AppendAndSave(ref i, 0, MarkupTokenType.GradientEnd, ref markup);
                 }
 
                 continue;
@@ -114,7 +164,7 @@ public static partial class Markup
             raw.Clear();
         }
 
-        void AppendAndSave(ref int index, int length, MarkupTokenType type)
+        void AppendAndSave(ref int index, int length, MarkupTokenType type, ref ReadOnlySpan<char> mrkp)
         {
             if (raw.Length > 0)
             {
@@ -124,10 +174,10 @@ public static partial class Markup
 
             if (type is MarkupTokenType.Shield)
             {
-                if (index + 1 < markup.Length)
+                if (index + 1 < mrkp.Length)
                 {
                     index++;
-                    raw.Append(markup[index]);
+                    raw.Append(mrkp[index]);
                 }
             }
             else
@@ -136,7 +186,7 @@ public static partial class Markup
 
                 while (index < end)
                 {
-                    raw.Append(markup[index]);
+                    raw.Append(mrkp[index]);
                     index++;
                 }
             }
@@ -192,4 +242,48 @@ public static partial class Markup
         "sevenup"    => Color.SevenUp,
         _            => new Color(255,255,255),
     };
+    private static bool ParseColor(ReadOnlySpan<char> name, out Color color)
+    {
+        switch (name)
+        {
+            case "nona":       color = Color.Nona;             return true;
+            case "nonalux":    color = Color.NonaLux;          return true;
+            case "octavus":    color = Color.Octavus;          return true;
+            case "septima":    color = Color.Septima;          return true;
+            case "sextus":     color = Color.Sextus;           return true;
+            case "festive":    color = Color.Festive;          return true;
+            case "genesis":    color = Color.Genesis;          return true;
+            case "catppuccin": color = Color.Catppuccin;       return true;
+            case "mint":       color = Color.Mint;             return true;
+            case "purplerain": color = Color.PurpleRain;       return true;
+            case "platypus":   color = Color.Platypus;         return true;
+            case "barbie":     color = Color.Barbie;           return true;
+            case "navy":       color = Color.Navy;             return true;
+            case "cyanish":    color = Color.Cyanish;          return true;
+            case "sevenup":    color = Color.SevenUp;          return true;
+            default:           color = new Color(255,255,255); return false;
+        }
+    }
+    private static Gradient GetGradient(ReadOnlySpan<char> colors)
+    {
+        int index = FindStopToken(colors, 0, ",");
+
+        ReadOnlySpan<char> first = colors[..index];
+        ReadOnlySpan<char> second = colors[(index + 1)..];
+
+        Color color1 = ParseColor(first, out Color parsed1)
+            ? parsed1
+            : Color.HEXToColorSafe(first);
+
+        Color color2 = ParseColor(second, out Color parsed2)
+            ? parsed2
+            : Color.HEXToColorSafe(second);
+
+        return new Gradient(color1, color2);
+    }
+    private static void PaintGradientBuilder()
+    {
+        richBuilder.Append(gradient.PaintString(gradientBuilder.ToString()));
+        gradientBuilder.Clear();
+    }
 }

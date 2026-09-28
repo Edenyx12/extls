@@ -107,7 +107,7 @@ public partial class Root
 
             int dot = meta.TypeName.LastIndexOf('.') + 1;
             string moduleName = meta.TypeName[dot..];
-            string aliases = "**$[nona]without aliases$[white]**";
+            string aliases = string.Empty;
 
             if (meta.Aliases.Length == 1) aliases = meta.Aliases[0];
             else if (meta.Aliases.Length > 1)
@@ -119,10 +119,11 @@ public partial class Root
                     else aliases += $"{meta.Aliases[i]}, ";
                 }
             }
+            else aliases = "**$[nona]without aliases$[white]**";
 
-            modules += $"  \\*  **$[octavus]{moduleName}$[white]** " +
+            modules += $"  • **$[octavus]{moduleName}$[white]** " +
                        $"$[darkgray]{module.version}$[white]: " +
-                       $"{aliases}";
+                       $"{aliases}\n";
         }
 
         Markup.Rich(modules, true);

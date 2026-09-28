@@ -1,7 +1,10 @@
 ﻿using extls.Core;
 using extls.Core.Decoration;
+using extls.Core.Modules;
+using extls.Core.Modules.Menu;
 
 namespace extls;
+
 
 public class Program
 {

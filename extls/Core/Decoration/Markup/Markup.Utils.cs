@@ -28,6 +28,12 @@ public static partial class Markup
         int stop = str.IndexOf(stopToken, index, StringComparison.Ordinal);
         return stop == -1 ? -1 : stop - index;
     }
+    public static int FindStopToken(ReadOnlySpan<char> str, int index, ReadOnlySpan<char> stopToken)
+    {
+        var slice = str.Slice(index);
+        int stop = slice.IndexOf(stopToken, StringComparison.Ordinal);
+        return stop == -1 ? -1 : stop;
+    }
 
     public static bool Match(string str, int index, string target)
     {
@@ -36,9 +42,18 @@ public static partial class Markup
         ReadOnlySpan<char> slice = str.AsSpan(index, target.Length);
         return slice.SequenceEqual(target);
     }
+    public static bool Match(ReadOnlySpan<char> str, int index, string target)
+    {
+        if (index < 0 || index + target.Length > str.Length) return false;
+
+        ReadOnlySpan<char> slice = str.Slice(index, target.Length);
+        return slice.SequenceEqual(target);
+    }
 
     public static string Slice(string str, int start, int stop)
         => str.AsSpan(start, stop - start).ToString();
+    public static ReadOnlySpan<char> Slice(ReadOnlySpan<char> str, int start, int stop)
+        => str.Slice(start, stop - start);
     public static Span<char> Slice(Span<char> str, int start, int stop)
         => str.Slice(start, stop - start);
 }

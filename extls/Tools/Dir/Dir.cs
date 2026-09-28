@@ -1,6 +1,7 @@
 ﻿using extls.Core;
 using extls.Core.Decoration;
 using System.Diagnostics;
+using System.Text;
 
 namespace extls.Tools;
 
@@ -27,7 +28,7 @@ public partial class Dir : Module
     public Dir()
     {
         name = "dir";
-        version = "0.6.13b";
+        version = "0.6.3b";
 
         string path = Path.Combine(Global.RootPath, "config", "dir-config.json");
 
@@ -164,11 +165,16 @@ public partial class Dir : Module
     {
         Out.Line("", OutType.Err);
 
-        string path = Directory.GetCurrentDirectory();
+        string? path = Arguments.GetPath(PathType.Folder);
+        if (path is null) path = Directory.GetCurrentDirectory();
 
         List<GridItem> items = new();
 
-        foreach (string folder in Directory.EnumerateDirectories(path)) items.Add(new(Path.GetFileName(folder), isFolder: true));
+        foreach (string folder in Directory.EnumerateDirectories(path))
+        {
+            items.Add(new(Path.GetFileName(folder), isFolder: true));
+        }
+
         foreach (string file in Directory.EnumerateFiles(path))
         {
             string f = Path.GetFileName(file);
@@ -199,30 +205,35 @@ public partial class Dir : Module
             return string.Compare(a.name, b.name, StringComparison.Ordinal);
         });
 
-        foreach (GridItem item in items)
-            Out.Debug($"{item.name} ({item.name.Length} chars.)");
-        Out.Debug("\n");
-
         int width = Console.WindowWidth;
         int lengthCount = 0;
 
+        StringBuilder grid = new StringBuilder();
+        Out.Inline(Markup.boldOpen);
+
         for (int i = 0; i < items.Count; i++)
         {
+            string item = string.Empty;
             FileIcon(items[i].name, ref fileIconUsable);
-            string output = config!.icons
-                ? $"{(items[i].isFolder ? "" : fileIconUsable.icon)} {items[i].name}  "
-                : $"{items[i].name}  ";
 
-            if (lengthCount + output.Length > width)
+            if (config.icons)
+                item += items[i].isFolder ? $"{folderIconUsable.icon}" : $"{fileIconUsable.icon} ";
+            
+            item += $"{items[i].name} ";
+
+            if (lengthCount + item.Length > width)
             {
                 lengthCount = 0;
-                Console.Write("\n");
+                grid.Append("\n");
             }
 
-            lengthCount += output.Length;
+            lengthCount += item.Length;
 
-            Markup.Rich($"$[{(items[i].isFolder ? (Global.Platform is Platform.Linux ? "#7dbeff" : "yellow") : fileIconUsable.color)}]{output}");
+            grid.Append($"{(items[i].isFolder ? folderIconUsable.color : fileIconUsable.color)}{item}");
         }
+
+        Markup.Rich(grid.ToString());
+        Out.Inline(Markup.boldClose);
 
         Out.Line("", OutType.Err);
     }
@@ -242,14 +253,9 @@ public partial class Dir : Module
         string extensions = string.Empty;
 
         if (ingoreExtensions)
-        {
             foreach (string extension in config.ignoreExtensions)
                 extensions += $"  $[magenta]{extension}\n";
-        }
-        else
-        {
-            extensions = "$[yellow]Empty";
-        }
+        else extensions = "$[yellow]Empty";
 
         Markup.Rich($"$[cyan]Icons: {(config.icons ? "$[green]True" : "$[red]False")}\n" +
                     $"$[cyan]Mini: {(config.mini ? "$[green]True" : "$[red]False")}\n" +

@@ -24,7 +24,7 @@ public readonly struct Gradient
         );
     }
 
-    public string PaintString(string str)
+    public string PaintString(ReadOnlySpan<char> str)
     {
         StringBuilder painted = new(str.Length * 20);
 
